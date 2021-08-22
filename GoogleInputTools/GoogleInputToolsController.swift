@@ -15,6 +15,8 @@ class GoogleInputToolsController: IMKInputController {
         return instance
     }()
 
+    let _cloudInputEngine = CloudInputEngine()
+
     func isAlphanumeric(key: Character) -> Bool {
         if key >= "a" && key <= "z" || key >= "0" && key <= "9" {
             return true
@@ -25,6 +27,10 @@ class GoogleInputToolsController: IMKInputController {
 
     func appendComposedString(string: String, client sender: Any!) {
         let compString = InputEngine.sharedInstance.appendComposeString(string: string)
+
+        self._cloudInputEngine.requestCandidates(text: compString) { candidates in
+            NSLog("returned candidates: %@", candidates)
+        }
 
         // set text at cursor
         client().setMarkedText(

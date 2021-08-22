@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D73286B26D297BD00970795 /* CloudInputEngine.swift */; };
 		4DCA724E26D2331900E53537 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA724D26D2331900E53537 /* Assets.xcassets */; };
 		4DCA725126D2331900E53537 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725026D2331900E53537 /* Preview Assets.xcassets */; };
 		4DCA725426D2331900E53537 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725226D2331900E53537 /* Main.storyboard */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4D73286B26D297BD00970795 /* CloudInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngine.swift; sourceTree = "<group>"; };
 		4DCA724626D2331700E53537 /* GoogleInputTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GoogleInputTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DCA724D26D2331900E53537 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4DCA725026D2331900E53537 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -71,6 +73,7 @@
 				4DCA724F26D2331900E53537 /* Preview Content */,
 				4DCA726226D249F600E53537 /* CandidatesWindow.swift */,
 				4DCA726426D24A1700E53537 /* CandidatesView.swift */,
+				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
 			);
 			path = GoogleInputTools;
 			sourceTree = "<group>";
@@ -157,6 +160,7 @@
 				4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */,
 				4DCA725D26D233B700E53537 /* main.swift in Sources */,
 				4DCA726126D246DF00E53537 /* InputEngine.swift in Sources */,
+				4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */,
 				4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
