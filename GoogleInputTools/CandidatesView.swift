@@ -14,16 +14,21 @@ class CandidatesView: NSView {
         NSLog("CandidatesView::draw")
 
         let bounds: NSRect = self.bounds
-        NSColor.lightGray.set()
+        NSColor.black.set()
         NSBezierPath.fill(bounds)
 
         let compString = InputEngine.sharedInstance.composeString()
         let compStringToPaint: NSMutableAttributedString = NSMutableAttributedString.init(
             string: compString)
 
-        compStringToPaint.addAttribute(
-            NSAttributedString.Key.font, value: NSFont.userFont(ofSize: 16)!,
-            range: NSMakeRange(0, compString.count))
+        let font = NSFont.monospacedSystemFont(ofSize: 14, weight: NSFont.Weight.regular)
+        let attributes: [NSAttributedString.Key: Any] = [
+            NSAttributedString.Key.font: font,
+            NSAttributedString.Key.foregroundColor: NSColor.white,
+            NSAttributedString.Key.backgroundColor: NSColor.systemBlue,
+        ]
+
+        compStringToPaint.addAttributes(attributes, range: NSMakeRange(0, compString.count))
 
         compStringToPaint.draw(in: bounds)
     }

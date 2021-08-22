@@ -38,19 +38,26 @@ class CandidatesWindow: NSWindow {
         let compStringToPaint: NSMutableAttributedString = NSMutableAttributedString.init(
             string: compString)
 
+        let font = NSFont.monospacedSystemFont(ofSize: 14, weight: NSFont.Weight.regular)
+
         compStringToPaint.addAttribute(
-            NSAttributedString.Key.font, value: NSFont.userFont(ofSize: 16)!,
-            range: NSMakeRange(0, compString.count))
+            NSAttributedString.Key.font, value: font, range: NSMakeRange(0, compString.count))
 
         // do not paint by default
         var rect: NSRect = NSZeroRect
 
+        let paddingX: CGFloat = 10
+        let paddingY: CGFloat = 10
+
         if compString.count > 0 {
             rect = NSMakeRect(
-                caretPosition.x, caretPosition.y - compStringToPaint.size().height,
-                compStringToPaint.size().width, compStringToPaint.size().height)
+                caretPosition.x,
+                caretPosition.y - compStringToPaint.size().height - paddingY,
+                compStringToPaint.size().width + paddingX,
+                compStringToPaint.size().height + paddingY)
         }
 
+        NSLog("compString: %@", compString)
         NSLog(
             "CandidatesWindow::update rect: (%.0f, %.0f, %.0f, %.0f)",
             rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
