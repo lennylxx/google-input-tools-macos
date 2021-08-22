@@ -24,3 +24,16 @@ A *cloud* input method that use [Google Input Tools](https://www.google.com/inpu
   rm -rf ~/Library/Input\ Methods/GoogleInputTools.app
   rm -rf ~/Library/Input\ Methods/GoogleInputTools.swiftmodule
   ```
+
+## Progress
+
+- [x] Basic input handling logic
+- [x] Basic UI
+- [x] Cloud engine
+- [ ] Display tokenized input string and candidates
+- [ ] Chinese/English mode toggle
+- [ ] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
+- [ ] Settings for font name, font size, color, etc.
+- [ ] Allow to use HTTP/SOCKS proxy
+- [ ] Skin display
+- [ ] Skin manager
