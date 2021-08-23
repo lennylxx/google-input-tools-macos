@@ -17,14 +17,6 @@ class GoogleInputToolsController: IMKInputController {
 
     let _cloudInputEngine = CloudInputEngine()
 
-    func isAlphanumeric(key: Character) -> Bool {
-        if key >= "a" && key <= "z" || key >= "0" && key <= "9" {
-            return true
-        } else {
-            return false
-        }
-    }
-
     func appendComposedString(string: String, client sender: Any!) {
         let compString = InputEngine.shared.appendComposeString(string: string)
 
@@ -53,7 +45,14 @@ class GoogleInputToolsController: IMKInputController {
 
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
-        InputEngine.shared.cleanComposeString()
+        InputEngine.shared.clean()
+        GoogleInputToolsController.candidatesWindow.update(sender: client())
+    }
+
+    func commitCandidate(client sender: Any!, candidate: String) {
+        client().insertText(candidate, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+
+        InputEngine.shared.clean()
         GoogleInputToolsController.candidatesWindow.update(sender: client())
     }
 
@@ -73,17 +72,35 @@ class GoogleInputToolsController: IMKInputController {
 
             NSLog("keydown: %@", String(key))
 
-            if isAlphanumeric(key: key) {
-                NSLog("Alphanumeric key")
+            if key.isLetter {
+                NSLog("Alphabet key")
                 appendComposedString(string: inputString, client: client)
                 return true
             }
 
-            if (event.keyCode == kVK_Space || event.keyCode == kVK_Return)
-                && InputEngine.shared.composeString().count > 0
-            {
-                NSLog("space or return")
+            if key.isNumber {
+                NSLog("number")
+                let keyValue = Int(key.hexDigitValue!)
+                let count = InputEngine.shared.candidates().count
+
+                NSLog("keyvalue: %d", keyValue)
+                if keyValue >= 1 && keyValue <= count {
+                    let candidate = InputEngine.shared.candidate(index: keyValue - 1)
+                    commitCandidate(client: sender, candidate: candidate)
+                    return true
+                }
+            }
+
+            if event.keyCode == kVK_Return && InputEngine.shared.composeString().count > 0 {
+                NSLog("return")
                 commitComposedString(client: sender)
+                return true
+            }
+
+            if event.keyCode == kVK_Space && InputEngine.shared.candidates().count > 0 {
+                NSLog("space")
+                let first = InputEngine.shared.firstCandidate()
+                commitCandidate(client: sender, candidate: first)
                 return true
             }
         }
