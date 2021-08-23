@@ -14,6 +14,7 @@ class InputContext {
 
     private var _composeString: String = ""
     private var _candidates: [String] = []
+    private var _numberedCandidates: [String] = []
 
     func appendComposeString(string: String) -> String {
         _composeString.append(string)
@@ -35,6 +36,10 @@ class InputContext {
 
     func setCandidates(candidates: [String]) {
         _candidates = candidates
+        _numberedCandidates = []
+        for i in 0..<_candidates.count {
+            _numberedCandidates.append("\(i+1). \(_candidates[i])")
+        }
     }
 
     func candidates() -> [String] {
@@ -47,6 +52,10 @@ class InputContext {
 
     func candidate(index: Int) -> String {
         return _candidates[index]
+    }
+
+    func numberedCandidates() -> [String] {
+        return _numberedCandidates
     }
 
     func clean() {

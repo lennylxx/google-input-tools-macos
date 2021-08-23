@@ -34,12 +34,12 @@ class CandidatesWindow: NSWindow {
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
 
-        let text = InputContext.shared.candidates().joined(separator: ",")
+        let numberedCandidates = InputContext.shared.numberedCandidates()
+        let text = numberedCandidates.joined(separator: " ")
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
-        let font = NSFont.monospacedSystemFont(ofSize: 14, weight: NSFont.Weight.regular)
         let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: font
+            NSAttributedString.Key.font: UISettings.Font
         ]
 
         textToPaint.addAttributes(attributes, range: NSMakeRange(0, text.count))
@@ -47,21 +47,18 @@ class CandidatesWindow: NSWindow {
         // do not paint by default
         var rect: NSRect = NSZeroRect
 
-        let paddingX: CGFloat = 10
-        let paddingY: CGFloat = 10
-
         // calculate candidate window position and size
         if text.count > 0 {
             rect = NSMakeRect(
                 caretPosition.x,
-                caretPosition.y - textToPaint.size().height - paddingY,
-                textToPaint.size().width + paddingX,
-                textToPaint.size().height + paddingY)
+                caretPosition.y - textToPaint.size().height - UISettings.WindowPaddingY * 2,
+                textToPaint.size().width + UISettings.WindowPaddingX * 2,
+                textToPaint.size().height + UISettings.WindowPaddingY * 2)
         }
 
         NSLog(
             "CandidatesWindow::update rect: (%.0f, %.0f, %.0f, %.0f)",
-            rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+            rect.origin.x, rect.origin.y, rect.width, rect.height)
 
         self.setFrame(rect, display: true)
 
