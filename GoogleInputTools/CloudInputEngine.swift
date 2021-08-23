@@ -23,7 +23,7 @@ class CloudInputEngine {
     let _inputTool = InputTool.Pinyin
     let _candidateNum = 11
 
-    func requestCandidates(text: String, complete: @escaping (String) -> Void) {
+    func requestCandidates(text: String, complete: @escaping (_ candidates: [String]) -> Void) {
         let url = URL(
             string:
                 "https://inputtools.google.com/request?text=\(text)&itc=\(_inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
@@ -71,13 +71,26 @@ class CloudInputEngine {
                     NSLog("matchedLength: %@", matchedLength)
                 }
 
-                let candidates = candidateArray.joined(separator: ",")
-                NSLog("candidates: %@", candidates)
+                NSLog("candidates: %@", candidateArray)
 
-                complete(candidates)
+                complete(candidateArray)
             }
         }
 
         task.resume()
+    }
+
+    func requestCandidatesSync(text: String) -> [String] {
+        let semaphore = DispatchSemaphore(value: 0)
+
+        var candidates: [String] = []
+        requestCandidates(text: text) { result in
+            candidates = result
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+
+        return candidates
     }
 }

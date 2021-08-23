@@ -28,17 +28,24 @@ class GoogleInputToolsController: IMKInputController {
     func appendComposedString(string: String, client sender: Any!) {
         let compString = InputEngine.shared.appendComposeString(string: string)
 
-        self._cloudInputEngine.requestCandidates(text: compString) { candidates in
-            NSLog("returned candidates: %@", candidates)
+        DispatchQueue.global().async {
+
+            let returnedCandidates = self._cloudInputEngine.requestCandidatesSync(text: compString)
+            NSLog("returned candidates: %@", returnedCandidates)
+
+            DispatchQueue.main.async {
+                NSLog("main thread candidates: %@", returnedCandidates)
+
+                // set text at cursor
+                self.client().setMarkedText(
+                    compString, selectionRange: NSMakeRange(0, compString.count),
+                    replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+
+                // update candidates window
+                InputEngine.shared.setCandidates(candidates: returnedCandidates)
+                GoogleInputToolsController.candidatesWindow.update(sender: self.client())
+            }
         }
-
-        // set text at cursor
-        client().setMarkedText(
-            compString, selectionRange: NSMakeRange(0, compString.count),
-            replacementRange: NSMakeRange(NSNotFound, NSNotFound))
-
-        // update candidates window
-        GoogleInputToolsController.candidatesWindow.update(sender: client())
     }
 
     func commitComposedString(client sender: Any!) {
