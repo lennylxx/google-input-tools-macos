@@ -34,7 +34,7 @@ class CandidatesWindow: NSWindow {
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
 
-        let text = InputEngine.shared.candidates().joined(separator: ",")
+        let text = InputContext.shared.candidates().joined(separator: ",")
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let font = NSFont.monospacedSystemFont(ofSize: 14, weight: NSFont.Weight.regular)

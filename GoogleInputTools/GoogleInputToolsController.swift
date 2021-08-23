@@ -17,49 +17,47 @@ class GoogleInputToolsController: IMKInputController {
 
     let _cloudInputEngine = CloudInputEngine()
 
-    func appendComposedString(string: String, client sender: Any!) {
-        let compString = InputEngine.shared.appendComposeString(string: string)
+    func getAndRenderCandidates(compString: String) {
 
         DispatchQueue.global().async {
 
             let returnedCandidates = self._cloudInputEngine.requestCandidatesSync(text: compString)
-            NSLog("returned candidates: %@", returnedCandidates)
 
             DispatchQueue.main.async {
                 NSLog("main thread candidates: %@", returnedCandidates)
 
-                // set text at cursor
-                self.client().setMarkedText(
-                    compString, selectionRange: NSMakeRange(0, compString.count),
-                    replacementRange: NSMakeRange(NSNotFound, NSNotFound))
-
                 // update candidates window
-                InputEngine.shared.setCandidates(candidates: returnedCandidates)
+                InputContext.shared.setCandidates(candidates: returnedCandidates)
                 GoogleInputToolsController.candidatesWindow.update(sender: self.client())
             }
         }
     }
 
+    func appendComposedString(string: String, client sender: Any!) {
+        let compString = InputContext.shared.appendComposeString(string: string)
+
+        // set text at cursor
+        self.client().setMarkedText(
+            compString, selectionRange: NSMakeRange(0, compString.count),
+            replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+
+        getAndRenderCandidates(compString: compString)
+    }
+
     func commitComposedString(client sender: Any!) {
-        let compString = InputEngine.shared.composeString()
+        let compString = InputContext.shared.composeString()
 
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
-        InputEngine.shared.clean()
+        InputContext.shared.clean()
         GoogleInputToolsController.candidatesWindow.update(sender: client())
     }
 
     func commitCandidate(client sender: Any!, candidate: String) {
         client().insertText(candidate, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
-        InputEngine.shared.clean()
+        InputContext.shared.clean()
         GoogleInputToolsController.candidatesWindow.update(sender: client())
-    }
-
-    override func inputText(_ string: String!, client sender: Any!) -> Bool {
-        NSLog("inputText: %@", string)
-
-        return false
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
@@ -81,25 +79,25 @@ class GoogleInputToolsController: IMKInputController {
             if key.isNumber {
                 NSLog("number")
                 let keyValue = Int(key.hexDigitValue!)
-                let count = InputEngine.shared.candidates().count
+                let count = InputContext.shared.candidates().count
 
                 NSLog("keyvalue: %d", keyValue)
                 if keyValue >= 1 && keyValue <= count {
-                    let candidate = InputEngine.shared.candidate(index: keyValue - 1)
+                    let candidate = InputContext.shared.candidate(index: keyValue - 1)
                     commitCandidate(client: sender, candidate: candidate)
                     return true
                 }
             }
 
-            if event.keyCode == kVK_Return && InputEngine.shared.composeString().count > 0 {
+            if event.keyCode == kVK_Return && InputContext.shared.composeString().count > 0 {
                 NSLog("return")
                 commitComposedString(client: sender)
                 return true
             }
 
-            if event.keyCode == kVK_Space && InputEngine.shared.candidates().count > 0 {
+            if event.keyCode == kVK_Space && InputContext.shared.candidates().count > 0 {
                 NSLog("space")
-                let first = InputEngine.shared.firstCandidate()
+                let first = InputContext.shared.firstCandidate()
                 commitCandidate(client: sender, candidate: first)
                 return true
             }

@@ -17,7 +17,7 @@ class CandidatesView: NSView {
         NSColor.black.set()
         NSBezierPath.fill(bounds)
 
-        let text = InputEngine.shared.candidates().joined(separator: ",")
+        let text = InputContext.shared.candidates().joined(separator: ",")
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let font = NSFont.monospacedSystemFont(ofSize: 14, weight: NSFont.Weight.regular)

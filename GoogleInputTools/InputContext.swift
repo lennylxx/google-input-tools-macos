@@ -1,14 +1,14 @@
 //
-//  InputEngine.swift
+//  InputContext.swift
 //  GoogleInputTools
 //
 //  Created by lennylxx on 8/22/21.
 //
 
-class InputEngine {
+class InputContext {
 
-    static let shared: InputEngine = {
-        let instance = InputEngine()
+    static let shared: InputContext = {
+        let instance = InputContext()
         return instance
     }()
 
@@ -17,6 +17,11 @@ class InputEngine {
 
     func appendComposeString(string: String) -> String {
         _composeString.append(string)
+        return _composeString
+    }
+
+    func deleteLastChar() -> String {
+        _composeString.removeLast()
         return _composeString
     }
 

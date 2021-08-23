@@ -13,7 +13,7 @@
 		4DCA725426D2331900E53537 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725226D2331900E53537 /* Main.storyboard */; };
 		4DCA725D26D233B700E53537 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA725C26D233B700E53537 /* main.swift */; };
 		4DCA725F26D2368B00E53537 /* GoogleInputToolsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA725E26D2368B00E53537 /* GoogleInputToolsController.swift */; };
-		4DCA726126D246DF00E53537 /* InputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726026D246DF00E53537 /* InputEngine.swift */; };
+		4DCA726126D246DF00E53537 /* InputContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726026D246DF00E53537 /* InputContext.swift */; };
 		4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726226D249F600E53537 /* CandidatesWindow.swift */; };
 		4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726426D24A1700E53537 /* CandidatesView.swift */; };
 /* End PBXBuildFile section */
@@ -28,7 +28,7 @@
 		4DCA725626D2331900E53537 /* GoogleInputTools.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GoogleInputTools.entitlements; sourceTree = "<group>"; };
 		4DCA725C26D233B700E53537 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		4DCA725E26D2368B00E53537 /* GoogleInputToolsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleInputToolsController.swift; sourceTree = "<group>"; };
-		4DCA726026D246DF00E53537 /* InputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputEngine.swift; sourceTree = "<group>"; };
+		4DCA726026D246DF00E53537 /* InputContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContext.swift; sourceTree = "<group>"; };
 		4DCA726226D249F600E53537 /* CandidatesWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidatesWindow.swift; sourceTree = "<group>"; };
 		4DCA726426D24A1700E53537 /* CandidatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidatesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -66,7 +66,7 @@
 				4DCA725626D2331900E53537 /* GoogleInputTools.entitlements */,
 				4DCA725526D2331900E53537 /* Info.plist */,
 				4DCA725E26D2368B00E53537 /* GoogleInputToolsController.swift */,
-				4DCA726026D246DF00E53537 /* InputEngine.swift */,
+				4DCA726026D246DF00E53537 /* InputContext.swift */,
 				4DCA725C26D233B700E53537 /* main.swift */,
 				4DCA724D26D2331900E53537 /* Assets.xcassets */,
 				4DCA725226D2331900E53537 /* Main.storyboard */,
@@ -159,7 +159,7 @@
 				4DCA725F26D2368B00E53537 /* GoogleInputToolsController.swift in Sources */,
 				4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */,
 				4DCA725D26D233B700E53537 /* main.swift in Sources */,
-				4DCA726126D246DF00E53537 /* InputEngine.swift in Sources */,
+				4DCA726126D246DF00E53537 /* InputContext.swift in Sources */,
 				4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */,
 				4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */,
 			);
