@@ -7,7 +7,7 @@
 
 class InputEngine {
 
-    static let sharedInstance: InputEngine = {
+    static let shared: InputEngine = {
         let instance = InputEngine()
         return instance
     }()

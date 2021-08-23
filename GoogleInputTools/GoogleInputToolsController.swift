@@ -26,7 +26,7 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     func appendComposedString(string: String, client sender: Any!) {
-        let compString = InputEngine.sharedInstance.appendComposeString(string: string)
+        let compString = InputEngine.shared.appendComposeString(string: string)
 
         self._cloudInputEngine.requestCandidates(text: compString) { candidates in
             NSLog("returned candidates: %@", candidates)
@@ -42,11 +42,11 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     func commitComposedString(client sender: Any!) {
-        let compString = InputEngine.sharedInstance.composeString()
+        let compString = InputEngine.shared.composeString()
 
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
-        InputEngine.sharedInstance.cleanComposeString()
+        InputEngine.shared.cleanComposeString()
         GoogleInputToolsController.candidatesWindow.update(sender: client())
     }
 
@@ -73,7 +73,7 @@ class GoogleInputToolsController: IMKInputController {
             }
 
             if (event.keyCode == kVK_Space || event.keyCode == kVK_Return)
-                && InputEngine.sharedInstance.composeString().count > 0
+                && InputEngine.shared.composeString().count > 0
             {
                 NSLog("space or return")
                 commitComposedString(client: sender)

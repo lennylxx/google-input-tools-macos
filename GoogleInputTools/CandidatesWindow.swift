@@ -34,7 +34,7 @@ class CandidatesWindow: NSWindow {
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
 
-        let compString = InputEngine.sharedInstance.composeString()
+        let compString = InputEngine.shared.composeString()
         let compStringToPaint: NSMutableAttributedString = NSMutableAttributedString.init(
             string: compString)
 

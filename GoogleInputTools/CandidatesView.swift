@@ -17,7 +17,7 @@ class CandidatesView: NSView {
         NSColor.black.set()
         NSBezierPath.fill(bounds)
 
-        let compString = InputEngine.sharedInstance.composeString()
+        let compString = InputEngine.shared.composeString()
         let compStringToPaint: NSMutableAttributedString = NSMutableAttributedString.init(
             string: compString)
 

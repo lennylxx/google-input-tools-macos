@@ -9,9 +9,8 @@ import InputMethodKit
 import SwiftUI
 
 let connectionName = "GoogleInputToolsConnection"
-var server: IMKServer
-
 let bundleId = Bundle.main.bundleIdentifier!
-server = IMKServer(name: connectionName, bundleIdentifier: Bundle.main.bundleIdentifier)
+
+let server = IMKServer(name: connectionName, bundleIdentifier: bundleId)
 
 NSApplication.shared.run()
