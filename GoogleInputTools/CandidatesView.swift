@@ -17,7 +17,7 @@ class CandidatesView: NSView {
         UISettings.TextBackground.set()
         NSBezierPath.fill(bounds)
 
-        let numberedCandidates = InputContext.shared.numberedCandidates()
+        let numberedCandidates = InputContext.shared.numberedCandidates
         let text = numberedCandidates.joined(separator: " ")
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 

@@ -23,7 +23,7 @@ class CloudInputEngine {
     let _inputTool = InputTool.Pinyin
     let _candidateNum = 11
 
-    func requestCandidates(text: String, complete: @escaping (_ candidates: [String]) -> Void) {
+    func requestCandidates(_ text: String, complete: @escaping (_ candidates: [String]) -> Void) {
         let url = URL(
             string:
                 "https://inputtools.google.com/request?text=\(text)&itc=\(_inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
@@ -80,11 +80,11 @@ class CloudInputEngine {
         task.resume()
     }
 
-    func requestCandidatesSync(text: String) -> [String] {
+    func requestCandidatesSync(_ text: String) -> [String] {
         let semaphore = DispatchSemaphore(value: 0)
 
         var candidates: [String] = []
-        requestCandidates(text: text) { result in
+        requestCandidates(text) { result in
             candidates = result
             semaphore.signal()
         }

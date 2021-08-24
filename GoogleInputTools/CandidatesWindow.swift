@@ -34,7 +34,7 @@ class CandidatesWindow: NSWindow {
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
 
-        let numberedCandidates = InputContext.shared.numberedCandidates()
+        let numberedCandidates = InputContext.shared.numberedCandidates
         let text = numberedCandidates.joined(separator: " ")
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
