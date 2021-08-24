@@ -32,7 +32,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] `Return` key to ignore candidate and commit input string
   - [x] Number keys (`1`-`9`) to select candidate and commit
   - [ ] Continue to show new candidates after partial matched cancidate is selected and committed
-  - [ ] `Backspace` key to remove last composing letter
+  - [x] `Backspace` key to remove last composing letter
   - [ ] Arrow keys to switch between highlighted candidate
 - [x] Basic UI
   - [x] Numbered candidates

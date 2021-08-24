@@ -33,12 +33,23 @@ class GoogleInputToolsController: IMKInputController {
         }
     }
 
-    func appendComposedString(string: String, client sender: Any!) {
+    func appendComposeString(string: String, client sender: Any!) {
         let compString = InputContext.shared.appendComposeString(string: string)
 
         // set text at cursor
         self.client().setMarkedText(
-            compString, selectionRange: NSMakeRange(0, compString.count),
+            compString, selectionRange: NSMakeRange(NSNotFound, NSNotFound),
+            replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+
+        getAndRenderCandidates(compString: compString)
+    }
+    
+    func removeLastCharFromComposeString(client sender: Any!) {
+        let compString = InputContext.shared.deleteLastChar()
+
+        // set text at cursor
+        self.client().setMarkedText(
+            compString, selectionRange: NSMakeRange(NSNotFound, NSNotFound),
             replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         getAndRenderCandidates(compString: compString)
@@ -72,7 +83,7 @@ class GoogleInputToolsController: IMKInputController {
 
             if key.isLetter {
                 NSLog("Alphabet key")
-                appendComposedString(string: inputString, client: client)
+                appendComposeString(string: inputString, client: client)
                 return true
             }
 
@@ -89,6 +100,12 @@ class GoogleInputToolsController: IMKInputController {
                 }
             }
 
+            if event.keyCode == kVK_Delete && InputContext.shared.composeString().count > 0 {
+                NSLog("backspace")
+                removeLastCharFromComposeString(client: sender)
+                return true
+            }
+            
             if event.keyCode == kVK_Return && InputContext.shared.composeString().count > 0 {
                 NSLog("return")
                 commitComposedString(client: sender)
