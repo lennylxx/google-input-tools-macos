@@ -10,67 +10,54 @@ import InputMethodKit
 
 class GoogleInputToolsController: IMKInputController {
 
-    static let candidatesWindow: CandidatesWindow = {
-        let instance = CandidatesWindow()
-        return instance
-    }()
+    override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
+        super.init(server: server, delegate: delegate, client: inputClient)
 
-    let _cloudInputEngine = CloudInputEngine()
+        InputContext.shared.composeString.subscribe { compString in
+            // set text at cursor
+            let range = NSMakeRange(NSNotFound, NSNotFound)
+            self.client().setMarkedText(compString, selectionRange: range, replacementRange: range)
+
+            if compString.count > 0 {
+                self.getAndRenderCandidates(compString)
+                CandidatesWindow.shared.show()
+            } else {
+                InputContext.shared.currentIndex = 0
+                CandidatesWindow.shared.hide()
+            }
+        }
+    }
 
     func getAndRenderCandidates(_ compString: String) {
 
         DispatchQueue.global().async {
 
-            let returnedCandidates = self._cloudInputEngine.requestCandidatesSync(compString)
+            let returnedCandidates = CloudInputEngine.shared.requestCandidatesSync(compString)
 
             DispatchQueue.main.async {
                 NSLog("main thread candidates: %@", returnedCandidates)
 
                 // update candidates window
                 InputContext.shared.candidates = returnedCandidates
-                GoogleInputToolsController.candidatesWindow.update(sender: self.client())
+                CandidatesWindow.shared.update(sender: self.client())
             }
         }
     }
 
-    func appendComposeString(string: String, client sender: Any!) {
-        InputContext.shared.composeString.append(string)
-        let compString = InputContext.shared.composeString
-
-        // set text at cursor
-        self.client().setMarkedText(
-            compString, selectionRange: NSMakeRange(0, compString.count),
-            replacementRange: NSMakeRange(NSNotFound, NSNotFound))
-
-        getAndRenderCandidates(compString)
-    }
-
-    func removeLastCharFromComposeString(client sender: Any!) {
-        InputContext.shared.composeString.removeLast()
-        let compString = InputContext.shared.composeString
-
-        // set text at cursor
-        self.client().setMarkedText(
-            compString, selectionRange: NSMakeRange(0, compString.count),
-            replacementRange: NSMakeRange(NSNotFound, NSNotFound))
-
-        getAndRenderCandidates(compString)
-    }
-
     func commitComposedString(client sender: Any!) {
-        let compString = InputContext.shared.composeString
+        let compString = InputContext.shared.composeString.value
 
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         InputContext.shared.clean()
-        GoogleInputToolsController.candidatesWindow.update(sender: client())
+        CandidatesWindow.shared.update(sender: client())
     }
 
     func commitCandidate(client sender: Any!, candidate: String) {
         client().insertText(candidate, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         InputContext.shared.clean()
-        GoogleInputToolsController.candidatesWindow.update(sender: client())
+        CandidatesWindow.shared.update(sender: client())
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
@@ -81,20 +68,17 @@ class GoogleInputToolsController: IMKInputController {
             let inputString = event.characters!
             let key = inputString.first!
 
-            NSLog("keydown: %@", String(key))
+            NSLog("key=%@", String(key))
 
             if key.isLetter {
-                NSLog("Alphabet key")
-                appendComposeString(string: inputString, client: client)
+                InputContext.shared.composeString.value.append(inputString)
                 return true
             }
 
             if key.isNumber {
-                NSLog("number")
                 let keyValue = Int(key.hexDigitValue!)
                 let count = InputContext.shared.candidates.count
 
-                NSLog("keyvalue: %d", keyValue)
                 if keyValue >= 1 && keyValue <= count {
                     let candidate = InputContext.shared.candidates[keyValue - 1]
                     commitCandidate(client: sender, candidate: candidate)
@@ -102,20 +86,45 @@ class GoogleInputToolsController: IMKInputController {
                 }
             }
 
-            if event.keyCode == kVK_Delete && InputContext.shared.composeString.count > 0 {
-                NSLog("backspace")
-                removeLastCharFromComposeString(client: sender)
+            if event.keyCode == kVK_LeftArrow {
+
+                // keep the marked text unchanged
+                let compString = InputContext.shared.composeString.value
+                let range = NSMakeRange(NSNotFound, NSNotFound)
+                self.client().setMarkedText(
+                    compString, selectionRange: range, replacementRange: range)
+
+                if InputContext.shared.currentIndex > 0 {
+                    InputContext.shared.currentIndex -= 1
+                    CandidatesWindow.shared.update(sender: self.client())
+                }
+            }
+
+            if event.keyCode == kVK_RightArrow {
+
+                // keep the marked text unchanged
+                let compString = InputContext.shared.composeString.value
+                let range = NSMakeRange(NSNotFound, NSNotFound)
+                self.client().setMarkedText(
+                    compString, selectionRange: range, replacementRange: range)
+
+                if InputContext.shared.currentIndex < InputContext.shared.candidates.count - 1 {
+                    InputContext.shared.currentIndex += 1
+                    CandidatesWindow.shared.update(sender: self.client())
+                }
+            }
+
+            if event.keyCode == kVK_Delete && InputContext.shared.composeString.value.count > 0 {
+                InputContext.shared.composeString.value.removeLast()
                 return true
             }
 
-            if event.keyCode == kVK_Return && InputContext.shared.composeString.count > 0 {
-                NSLog("return")
+            if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return) && InputContext.shared.composeString.value.count > 0 {
                 commitComposedString(client: sender)
                 return true
             }
 
             if event.keyCode == kVK_Space && InputContext.shared.candidates.count > 0 {
-                NSLog("space")
                 let first = InputContext.shared.candidates.first!
                 commitCandidate(client: sender, candidate: first)
                 return true

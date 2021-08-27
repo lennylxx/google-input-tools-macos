@@ -7,28 +7,30 @@
 
 class InputContext {
 
-    static let shared: InputContext = {
-        let instance = InputContext()
-        return instance
-    }()
+    static let shared = InputContext()
 
-    private var _composeString: String = ""
-    private var _candidates: [String] = []
+    var composeString: Observable<String> = Observable("")
+    private var _candidates: Observable<[String]> = Observable<[String]>([])
     private var _numberedCandidates: [String] = []
 
-    var composeString: String {
-        get { return _composeString }
-        set { _composeString = newValue }
-    }
+    var currentIndex: Int = 0
 
     var candidates: [String] {
-        get { return _candidates }
+        get { return _candidates.value }
         set {
-            _candidates = newValue
+            _candidates.value = newValue
             _numberedCandidates = []
-            for i in 0..<_candidates.count {
-                _numberedCandidates.append("\(i+1). \(_candidates[i])")
+            for i in 0..<_candidates.value.count {
+                _numberedCandidates.append("\(i+1). \(_candidates.value[i])")
             }
+        }
+    }
+
+    var currentNumberedCandidate: String {
+        if currentIndex >= 0 && currentIndex < _numberedCandidates.count {
+            return _numberedCandidates[currentIndex]
+        } else {
+            return ""
         }
     }
 
@@ -37,8 +39,9 @@ class InputContext {
     }
 
     func clean() {
-        _composeString = ""
-        _candidates = []
+        currentIndex = 0
+        composeString.value = ""
+        _candidates.value = []
         _numberedCandidates = []
     }
 }

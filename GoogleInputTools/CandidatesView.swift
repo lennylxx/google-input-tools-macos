@@ -26,15 +26,21 @@ class CandidatesView: NSView {
             NSAttributedString.Key.foregroundColor: UISettings.TextColor,
         ]
 
-        // TOOD: use arrow key to change current selected candidate
-        let current = numberedCandidates.count > 0 ? numberedCandidates[0] : ""
+        var start = 0
+        let currentIndex = InputContext.shared.currentIndex
+        if currentIndex > 0 {
+            start = numberedCandidates.prefix(currentIndex).joined(separator: " ").count + 1
+        }
+
+        let selection = InputContext.shared.currentNumberedCandidate
 
         let selectionAttributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.backgroundColor: UISettings.SelectionBackground
         ]
 
         textToPaint.addAttributes(globalAttributes, range: NSMakeRange(0, text.count))
-        textToPaint.addAttributes(selectionAttributes, range: NSMakeRange(0, current.count))
+        textToPaint.addAttributes(
+            selectionAttributes, range: NSMakeRange(start, selection.count))
 
         // calculate text bounds with padding inside the view
         let textBounds = NSMakeRect(

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */; };
+		4D3B7AD126D4D8E3008C1A4B /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7AD026D4D8E3008C1A4B /* Observable.swift */; };
 		4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D73286B26D297BD00970795 /* CloudInputEngine.swift */; };
 		4DCA724E26D2331900E53537 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA724D26D2331900E53537 /* Assets.xcassets */; };
 		4DCA725126D2331900E53537 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725026D2331900E53537 /* Preview Assets.xcassets */; };
@@ -21,6 +22,7 @@
 
 /* Begin PBXFileReference section */
 		4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISettings.swift; sourceTree = "<group>"; };
+		4D3B7AD026D4D8E3008C1A4B /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
 		4D73286B26D297BD00970795 /* CloudInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngine.swift; sourceTree = "<group>"; };
 		4DCA724626D2331700E53537 /* GoogleInputTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GoogleInputTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DCA724D26D2331900E53537 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 				4DCA726426D24A1700E53537 /* CandidatesView.swift */,
 				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
+				4D3B7AD026D4D8E3008C1A4B /* Observable.swift */,
 			);
 			path = GoogleInputTools;
 			sourceTree = "<group>";
@@ -159,6 +162,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D3B7AD126D4D8E3008C1A4B /* Observable.swift in Sources */,
 				4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */,
 				4DCA725F26D2368B00E53537 /* GoogleInputToolsController.swift in Sources */,
 				4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */,

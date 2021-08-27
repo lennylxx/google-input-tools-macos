@@ -10,6 +10,9 @@ import InputMethodKit
 import SwiftUI
 
 class CandidatesWindow: NSWindow {
+
+    static let shared = CandidatesWindow()
+
     var _view: CandidatesView
 
     override init(
@@ -77,5 +80,13 @@ class CandidatesWindow: NSWindow {
         pos = NSMakePoint(rect.origin.x, rect.origin.y)
 
         return pos
+    }
+
+    func show() {
+        self.setIsVisible(true)
+    }
+
+    func hide() {
+        self.setIsVisible(false)
     }
 }

@@ -20,6 +20,8 @@ enum InputTool: String {
 
 class CloudInputEngine {
 
+    static let shared = CloudInputEngine()
+
     let _inputTool = InputTool.Pinyin
     let _candidateNum = 11
 
