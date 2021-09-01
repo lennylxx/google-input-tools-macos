@@ -25,7 +25,7 @@ class GoogleInputToolsController: IMKInputController {
 
             if UISettings.SystemUI {
                 if compString.count > 0 {
-                    self.candidates.update()
+                    self.getAndRenderCandidates(compString)
                     self.candidates.show()
                 } else {
                     self.candidates.hide()
@@ -69,8 +69,10 @@ class GoogleInputToolsController: IMKInputController {
                 InputContext.shared.candidates = candidates
                 InputContext.shared.matchedLength = matchedLength
 
-                // update custom candidates window
-                if !UISettings.SystemUI {
+                // update candidates window
+                if UISettings.SystemUI {
+                    self.candidates.update()
+                } else {
                     CandidatesWindow.shared.update(sender: self.client())
                 }
             }
@@ -116,14 +118,7 @@ class GoogleInputToolsController: IMKInputController {
     override func candidates(_ sender: Any!) -> [Any]! {
         NSLog("\(#function)")
 
-        let compString = InputContext.shared.composeString.value
-        let (candidates, matchedLength) = CloudInputEngine.shared.requestCandidatesSync(compString)
-
-        NSLog("candidates: %@", candidates)
-
-        InputContext.shared.candidates = candidates
-        InputContext.shared.matchedLength = matchedLength
-        return candidates
+        return InputContext.shared.candidates
     }
 
     override func candidateSelected(_ candidateString: NSAttributedString!) {
