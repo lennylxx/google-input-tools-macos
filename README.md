@@ -31,9 +31,9 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] `Space` key to commit first candidate
   - [x] `Return` key to ignore candidate and commit input string
   - [x] Number keys (`1`-`9`) to select candidate and commit
-  - [x] Continue to show new candidates after partial matched cancidate is selected and committed
+  - [x] Continue to show new candidates after partial matched candidate is selected and committed
   - [x] `Backspace` key to remove last composing letter
-  - [x] `Esc` key to cancle composing
+  - [x] `Esc` key to cancel composing
 - [x] System UI
 - [x] Basic custom UI
   - [x] Numbered candidates
@@ -42,11 +42,12 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [ ] Group candidates into multiple pages, each page with at most `10` candidates
   - [ ] Page up and page down button
   - [ ] Draggable candidate window
+- [ ] Advanced custom UI
+  - [ ] Display tokenized input string and candidates
+  - [ ] Settings for font name, font size, color, etc.
+  - [ ] Skin display
+  - [ ] Skin manager
 - [x] Cloud engine
-- [ ] Display tokenized input string and candidates
 - [ ] Chinese/English mode toggle
 - [ ] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
-- [ ] Settings for font name, font size, color, etc.
 - [ ] Allow to use HTTP/SOCKS proxy
-- [ ] Skin display
-- [ ] Skin manager
