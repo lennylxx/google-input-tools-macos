@@ -25,7 +25,10 @@ class CloudInputEngine {
     let _inputTool = InputTool.Pinyin
     let _candidateNum = 11
 
-    func requestCandidates(_ text: String, complete: @escaping (_ candidates: [String]) -> Void) {
+    func requestCandidates(
+        _ text: String,
+        complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
+    ) {
         let url = URL(
             string:
                 "https://inputtools.google.com/request?text=\(text)&itc=\(_inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
@@ -69,30 +72,27 @@ class CloudInputEngine {
                 let candidateMeta = candidateObject[3] as! [String: Any]
 
                 // let annotation = candidateMeta["annotation"] as! Array<String>
-                if let matchedLength = candidateMeta["matched_length"] as? [Int] {
-                    NSLog("matchedLength: %@", matchedLength)
-                }
-
-                NSLog("candidates: %@", candidateArray)
-
-                complete(candidateArray)
+                let matchedLength = candidateMeta["matched_length"] as? [Int]
+                complete(candidateArray, matchedLength)
             }
         }
 
         task.resume()
     }
 
-    func requestCandidatesSync(_ text: String) -> [String] {
+    func requestCandidatesSync(_ text: String) -> ([String], [Int]?) {
         let semaphore = DispatchSemaphore(value: 0)
 
         var candidates: [String] = []
-        requestCandidates(text) { result in
+        var matchedLength: [Int]? = []
+        requestCandidates(text) { result, length in
             candidates = result
+            matchedLength = length
             semaphore.signal()
         }
 
         semaphore.wait()
 
-        return candidates
+        return (candidates, matchedLength)
     }
 }

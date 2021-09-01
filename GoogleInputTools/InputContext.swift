@@ -13,6 +13,7 @@ class InputContext {
     private var _candidates: Observable<[String]> = Observable<[String]>([])
     private var _numberedCandidates: [String] = []
 
+    var matchedLength: [Int]? = []
     var currentIndex: Int = 0
 
     var candidates: [String] {
@@ -40,6 +41,7 @@ class InputContext {
 
     func clean() {
         currentIndex = 0
+        matchedLength = []
         composeString.value = ""
         _candidates.value = []
         _numberedCandidates = []

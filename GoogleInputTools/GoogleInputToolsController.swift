@@ -10,7 +10,12 @@ import InputMethodKit
 
 class GoogleInputToolsController: IMKInputController {
 
+    private let candidates: IMKCandidates
+
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
+        self.candidates = IMKCandidates(
+            server: server, panelType: kIMKSingleRowSteppingCandidatePanel)
+
         super.init(server: server, delegate: delegate, client: inputClient)
 
         InputContext.shared.composeString.subscribe { compString in
@@ -18,28 +23,56 @@ class GoogleInputToolsController: IMKInputController {
             let range = NSMakeRange(NSNotFound, NSNotFound)
             self.client().setMarkedText(compString, selectionRange: range, replacementRange: range)
 
-            if compString.count > 0 {
-                self.getAndRenderCandidates(compString)
-                CandidatesWindow.shared.show()
+            if UISettings.SystemUI {
+                if compString.count > 0 {
+                    self.candidates.update()
+                    self.candidates.show()
+                } else {
+                    self.candidates.hide()
+                }
             } else {
-                InputContext.shared.currentIndex = 0
-                CandidatesWindow.shared.hide()
+                if compString.count > 0 {
+                    self.getAndRenderCandidates(compString)
+                    CandidatesWindow.shared.show()
+                } else {
+                    InputContext.shared.currentIndex = 0
+                    CandidatesWindow.shared.hide()
+                }
             }
         }
+    }
+
+    override func activateServer(_ sender: Any!) {
+        NSLog("%@", "\(#function)((\(sender))")
+        super.activateServer(sender)
+    }
+
+    override func deactivateServer(_ sender: Any) {
+        NSLog("%@", "\(#function)((\(sender))")
+
+        self.candidates.hide()
+        InputContext.shared.clean()
+
+        super.deactivateServer(sender)
     }
 
     func getAndRenderCandidates(_ compString: String) {
 
         DispatchQueue.global().async {
 
-            let returnedCandidates = CloudInputEngine.shared.requestCandidatesSync(compString)
+            let (candidates, matchedLength) = CloudInputEngine.shared.requestCandidatesSync(
+                compString)
 
             DispatchQueue.main.async {
-                NSLog("main thread candidates: %@", returnedCandidates)
+                NSLog("main thread candidates: %@", candidates)
 
-                // update candidates window
-                InputContext.shared.candidates = returnedCandidates
-                CandidatesWindow.shared.update(sender: self.client())
+                InputContext.shared.candidates = candidates
+                InputContext.shared.matchedLength = matchedLength
+
+                // update custom candidates window
+                if !UISettings.SystemUI {
+                    CandidatesWindow.shared.update(sender: self.client())
+                }
             }
         }
     }
@@ -50,14 +83,66 @@ class GoogleInputToolsController: IMKInputController {
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         InputContext.shared.clean()
-        CandidatesWindow.shared.update(sender: client())
+
+        if !UISettings.SystemUI {
+            CandidatesWindow.shared.update(sender: client())
+        }
     }
 
-    func commitCandidate(client sender: Any!, candidate: String) {
-        client().insertText(candidate, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+    func commitCandidate(client sender: Any!) {
+        NSLog("\(#function)")
+
+        let compString = InputContext.shared.composeString.value
+        let index = InputContext.shared.currentIndex
+        let candidate = InputContext.shared.candidates[index]
+        let matched = InputContext.shared.matchedLength?[index] ?? compString.count
+
+        let fromIndex = compString.index(
+            compString.endIndex, offsetBy: matched - compString.count)
+        let remain = compString[fromIndex...]
+
+        client().insertText(candidate, replacementRange: NSMakeRange(0, matched))
+        let range = NSMakeRange(NSNotFound, NSNotFound)
+        client().setMarkedText(remain, selectionRange: range, replacementRange: range)
 
         InputContext.shared.clean()
-        CandidatesWindow.shared.update(sender: client())
+        InputContext.shared.composeString.value = String(remain)
+
+        if !UISettings.SystemUI {
+            CandidatesWindow.shared.update(sender: client())
+        }
+    }
+
+    override func candidates(_ sender: Any!) -> [Any]! {
+        NSLog("\(#function)")
+
+        let compString = InputContext.shared.composeString.value
+        let (candidates, matchedLength) = CloudInputEngine.shared.requestCandidatesSync(compString)
+
+        NSLog("candidates: %@", candidates)
+
+        InputContext.shared.candidates = candidates
+        InputContext.shared.matchedLength = matchedLength
+        return candidates
+    }
+
+    override func candidateSelected(_ candidateString: NSAttributedString!) {
+        NSLog("\(#function)")
+
+        let candidate = candidateString?.string ?? ""
+        let id = InputContext.shared.candidates.firstIndex(of: candidate) ?? 0
+
+        NSLog("candidate index: \(id)")
+        InputContext.shared.currentIndex = id
+        commitCandidate(client: self.client())
+    }
+
+    override func candidateSelectionChanged(_ candidateString: NSAttributedString!) {
+        NSLog("\(#function)")
+    }
+
+    override func commitComposition(_ sender: Any!) {
+        NSLog("\(#function)")
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
@@ -80,38 +165,39 @@ class GoogleInputToolsController: IMKInputController {
                 let count = InputContext.shared.candidates.count
 
                 if keyValue >= 1 && keyValue <= count {
-                    let candidate = InputContext.shared.candidates[keyValue - 1]
-                    commitCandidate(client: sender, candidate: candidate)
+                    InputContext.shared.currentIndex = keyValue - 1
+                    commitCandidate(client: sender)
                     return true
                 }
+
+                return false
             }
 
-            if event.keyCode == kVK_LeftArrow {
+            if event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow {
 
-                // keep the marked text unchanged
-                let compString = InputContext.shared.composeString.value
-                let range = NSMakeRange(NSNotFound, NSNotFound)
-                self.client().setMarkedText(
-                    compString, selectionRange: range, replacementRange: range)
-
-                if InputContext.shared.currentIndex > 0 {
+                if event.keyCode == kVK_LeftArrow && InputContext.shared.currentIndex > 0 {
                     InputContext.shared.currentIndex -= 1
-                    CandidatesWindow.shared.update(sender: self.client())
                 }
-            }
 
-            if event.keyCode == kVK_RightArrow {
-
-                // keep the marked text unchanged
-                let compString = InputContext.shared.composeString.value
-                let range = NSMakeRange(NSNotFound, NSNotFound)
-                self.client().setMarkedText(
-                    compString, selectionRange: range, replacementRange: range)
-
-                if InputContext.shared.currentIndex < InputContext.shared.candidates.count - 1 {
+                if event.keyCode == kVK_RightArrow
+                    && InputContext.shared.currentIndex < InputContext.shared.candidates.count
+                        - 1
+                {
                     InputContext.shared.currentIndex += 1
+                }
+
+                if UISettings.SystemUI {
+                    self.candidates.interpretKeyEvents([event])
+                } else {
+                    // keep the marked text unchanged
+                    let compString = InputContext.shared.composeString.value
+                    let range = NSMakeRange(NSNotFound, NSNotFound)
+                    self.client().setMarkedText(
+                        compString, selectionRange: range, replacementRange: range)
                     CandidatesWindow.shared.update(sender: self.client())
                 }
+
+                return true
             }
 
             if event.keyCode == kVK_Delete && InputContext.shared.composeString.value.count > 0 {
@@ -119,14 +205,15 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return) && InputContext.shared.composeString.value.count > 0 {
+            if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return)
+                && InputContext.shared.composeString.value.count > 0
+            {
                 commitComposedString(client: sender)
                 return true
             }
 
             if event.keyCode == kVK_Space && InputContext.shared.candidates.count > 0 {
-                let first = InputContext.shared.candidates.first!
-                commitCandidate(client: sender, candidate: first)
+                commitCandidate(client: sender)
                 return true
             }
         }

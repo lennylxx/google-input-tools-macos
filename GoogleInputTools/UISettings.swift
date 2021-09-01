@@ -8,6 +8,8 @@
 import SwiftUI
 
 class UISettings {
+    // when this is set to true, System UI will be used instead of custom window
+    static let SystemUI = true
 
     // candidate window
     static let WindowPaddingX: CGFloat = 4
