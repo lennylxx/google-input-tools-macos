@@ -25,6 +25,9 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   rm -rf ~/Library/Input\ Methods/GoogleInputTools.swiftmodule
   ```
 
+## Screenshot
+<img width="555" alt="screenshot" src="https://user-images.githubusercontent.com/5811576/131733470-c946efa3-0f80-4227-a4b1-9d047f51f47b.png">
+
 ## Progress
 
 - [x] Basic input handling logic
