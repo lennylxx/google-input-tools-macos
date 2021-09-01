@@ -16,7 +16,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
 
 > The output will be `~/Library/Input\ Methods/GoogleInputTools.app`
 
-3. Open `System Preferences` -> `Keyboard` -> `Input Sources`, click `+` to add a new input method, choose `Chinese, Simplified` -> `GoogleInputTools`.
+3. Open `System Preferences` -> `Keyboard` -> `Input Sources`, click `+` to add a new input method, choose `Chinese, Simplified` -> `Google Input Tools`.
 
 4. If you want to remove it, simply run below command.
 

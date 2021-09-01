@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D07405326E007B5007FE390 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D07405226E007B5007FE390 /* InfoPlist.strings */; };
 		4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */; };
 		4D3B7AD126D4D8E3008C1A4B /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7AD026D4D8E3008C1A4B /* Observable.swift */; };
 		4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D73286B26D297BD00970795 /* CloudInputEngine.swift */; };
@@ -21,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4D07405226E007B5007FE390 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 		4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISettings.swift; sourceTree = "<group>"; };
 		4D3B7AD026D4D8E3008C1A4B /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
 		4D73286B26D297BD00970795 /* CloudInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngine.swift; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
 				4D3B7AD026D4D8E3008C1A4B /* Observable.swift */,
+				4D07405226E007B5007FE390 /* InfoPlist.strings */,
 			);
 			path = GoogleInputTools;
 			sourceTree = "<group>";
@@ -150,6 +153,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DCA725426D2331900E53537 /* Main.storyboard in Resources */,
+				4D07405326E007B5007FE390 /* InfoPlist.strings in Resources */,
 				4DCA725126D2331900E53537 /* Preview Assets.xcassets in Resources */,
 				4DCA724E26D2331900E53537 /* Assets.xcassets in Resources */,
 			);
