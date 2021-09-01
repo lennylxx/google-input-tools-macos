@@ -33,6 +33,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Number keys (`1`-`9`) to select candidate and commit
   - [x] Continue to show new candidates after partial matched cancidate is selected and committed
   - [x] `Backspace` key to remove last composing letter
+  - [x] `Esc` key to cancle composing
 - [x] System UI
 - [x] Basic custom UI
   - [x] Numbered candidates

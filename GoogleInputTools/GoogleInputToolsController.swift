@@ -216,6 +216,11 @@ class GoogleInputToolsController: IMKInputController {
                 commitCandidate(client: sender)
                 return true
             }
+
+            if event.keyCode == kVK_Escape {
+                InputContext.shared.clean()
+                return true
+            }
         }
 
         return false
