@@ -1,6 +1,9 @@
 # Google Input Tools for macOS
 
+[![Build Status](https://github.com/lennylxx/google-input-tools-macos/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/lennylxx/google-input-tools-macos/actions/workflows/build.yml?query=branch%3Amain)
+
 A *cloud* input method that uses [Google Input Tools](https://www.google.com/inputtools/) as engine for macOS.
+
 
 ## How to use
 
