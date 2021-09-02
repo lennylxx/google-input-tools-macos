@@ -25,6 +25,7 @@ jobs:
         # uses: sersoft-gmbh/xcodebuild-action@349a5f8426171a9680acbca22585d2af4c09a5d6
         uses: sersoft-gmbh/xcodebuild-action@v1.6.0
         with:
+          project: GoogleInputTools.xcodeproj
           scheme: GoogleInputTools
           configuration: Debug
           arch: ${{ matrix.arch }}
