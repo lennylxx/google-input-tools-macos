@@ -30,4 +30,4 @@ jobs:
           configuration: Debug
           arch: ${{ matrix.arch }}
           action: build
-          xcpretty: false
+          use-xcpretty: false
