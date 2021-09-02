@@ -13,45 +13,31 @@ class GoogleInputToolsController: IMKInputController {
     private let candidates: IMKCandidates
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
+        NSLog("\(#function)(\(inputClient))")
+
         self.candidates = IMKCandidates(
             server: server, panelType: kIMKSingleRowSteppingCandidatePanel)
 
         super.init(server: server, delegate: delegate, client: inputClient)
+    }
 
-        InputContext.shared.composeString.subscribe { compString in
-            // set text at cursor
-            let range = NSMakeRange(NSNotFound, NSNotFound)
-            self.client().setMarkedText(compString, selectionRange: range, replacementRange: range)
-
-            if UISettings.SystemUI {
-                if compString.count > 0 {
-                    self.getAndRenderCandidates(compString)
-                    self.candidates.show()
-                } else {
-                    self.candidates.hide()
-                }
-            } else {
-                if compString.count > 0 {
-                    self.getAndRenderCandidates(compString)
-                    CandidatesWindow.shared.show()
-                } else {
-                    InputContext.shared.currentIndex = 0
-                    CandidatesWindow.shared.hide()
-                }
-            }
-        }
+    override func client() -> (IMKTextInput & NSObjectProtocol)! {
+        let c = super.client()
+        NSLog("client=\(c)")
+        return c
     }
 
     override func activateServer(_ sender: Any!) {
-        NSLog("%@", "\(#function)((\(sender))")
+        NSLog("\(#function)(\(sender))")
         super.activateServer(sender)
     }
 
     override func deactivateServer(_ sender: Any) {
-        NSLog("%@", "\(#function)((\(sender))")
+        NSLog("\(#function)(\(sender))")
 
-        self.candidates.hide()
         InputContext.shared.clean()
+        self.candidates.update()
+        self.candidates.hide()
 
         super.deactivateServer(sender)
     }
@@ -64,7 +50,7 @@ class GoogleInputToolsController: IMKInputController {
                 compString)
 
             DispatchQueue.main.async {
-                NSLog("main thread candidates: %@", candidates)
+                NSLog("main thread candidates: \(candidates)")
 
                 InputContext.shared.candidates = candidates
                 InputContext.shared.matchedLength = matchedLength
@@ -79,12 +65,39 @@ class GoogleInputToolsController: IMKInputController {
         }
     }
 
+    func updateCandidatesWindow() {
+        let compString = InputContext.shared.composeString
+
+        // set text at cursor
+        let range = NSMakeRange(NSNotFound, NSNotFound)
+        client().setMarkedText(compString, selectionRange: range, replacementRange: range)
+
+        if UISettings.SystemUI {
+            if compString.count > 0 {
+                self.getAndRenderCandidates(compString)
+                self.candidates.show()
+            } else {
+                self.candidates.hide()
+            }
+        } else {
+            if compString.count > 0 {
+                self.getAndRenderCandidates(compString)
+                CandidatesWindow.shared.show()
+            } else {
+                InputContext.shared.currentIndex = 0
+                CandidatesWindow.shared.hide()
+            }
+        }
+    }
+
     func commitComposedString(client sender: Any!) {
-        let compString = InputContext.shared.composeString.value
+        let compString = InputContext.shared.composeString
 
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         InputContext.shared.clean()
+        self.candidates.update()
+        self.candidates.hide()
 
         if !UISettings.SystemUI {
             CandidatesWindow.shared.update(sender: client())
@@ -94,21 +107,27 @@ class GoogleInputToolsController: IMKInputController {
     func commitCandidate(client sender: Any!) {
         NSLog("\(#function)")
 
-        let compString = InputContext.shared.composeString.value
+        let compString = InputContext.shared.composeString
         let index = InputContext.shared.currentIndex
         let candidate = InputContext.shared.candidates[index]
         let matched = InputContext.shared.matchedLength?[index] ?? compString.count
 
+        NSLog("compString=\(compString), length=\(compString.count)")
+        NSLog("currentIndex=\(index), currentCandidate=\(candidate), matchedLength=\(matched)")
+
         let fromIndex = compString.index(
             compString.endIndex, offsetBy: matched - compString.count)
         let remain = compString[fromIndex...]
+
+        NSLog("fromIndex=\(fromIndex.utf16Offset(in: compString)), remain=\(remain)")
 
         client().insertText(candidate, replacementRange: NSMakeRange(0, matched))
         let range = NSMakeRange(NSNotFound, NSNotFound)
         client().setMarkedText(remain, selectionRange: range, replacementRange: range)
 
         InputContext.shared.clean()
-        InputContext.shared.composeString.value = String(remain)
+        InputContext.shared.composeString = String(remain)
+        updateCandidatesWindow()
 
         if !UISettings.SystemUI {
             CandidatesWindow.shared.update(sender: client())
@@ -151,11 +170,12 @@ class GoogleInputToolsController: IMKInputController {
             NSLog("key=%@", String(key))
 
             if key.isLetter {
-                InputContext.shared.composeString.value.append(inputString)
+                InputContext.shared.composeString.append(inputString)
+                updateCandidatesWindow()
                 return true
             }
 
-            if key.isNumber {
+            else if key.isNumber {
                 let keyValue = Int(key.hexDigitValue!)
                 let count = InputContext.shared.candidates.count
 
@@ -168,7 +188,7 @@ class GoogleInputToolsController: IMKInputController {
                 return false
             }
 
-            if event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow {
+            else if event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow {
 
                 if event.keyCode == kVK_LeftArrow && InputContext.shared.currentIndex > 0 {
                     InputContext.shared.currentIndex -= 1
@@ -185,7 +205,7 @@ class GoogleInputToolsController: IMKInputController {
                     self.candidates.interpretKeyEvents([event])
                 } else {
                     // keep the marked text unchanged
-                    let compString = InputContext.shared.composeString.value
+                    let compString = InputContext.shared.composeString
                     let range = NSMakeRange(NSNotFound, NSNotFound)
                     self.client().setMarkedText(
                         compString, selectionRange: range, replacementRange: range)
@@ -195,26 +215,32 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            if event.keyCode == kVK_Delete && InputContext.shared.composeString.value.count > 0 {
-                InputContext.shared.composeString.value.removeLast()
+            else if event.keyCode == kVK_Delete && InputContext.shared.composeString.count > 0 {
+                InputContext.shared.composeString.removeLast()
+                updateCandidatesWindow()
                 return true
             }
 
-            if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return)
-                && InputContext.shared.composeString.value.count > 0
+            else if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return)
+                && InputContext.shared.composeString.count > 0
             {
                 commitComposedString(client: sender)
                 return true
             }
 
-            if event.keyCode == kVK_Space && InputContext.shared.candidates.count > 0 {
+            else if event.keyCode == kVK_Space && InputContext.shared.candidates.count > 0 {
                 commitCandidate(client: sender)
                 return true
             }
 
-            if event.keyCode == kVK_Escape {
+            else if event.keyCode == kVK_Escape {
                 InputContext.shared.clean()
+                self.candidates.update()
+                self.candidates.hide()
                 return true
+            } else {
+                commitComposedString(client: sender)
+                return false
             }
         }
 

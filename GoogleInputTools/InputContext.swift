@@ -9,20 +9,20 @@ class InputContext {
 
     static let shared = InputContext()
 
-    var composeString: Observable<String> = Observable("")
-    private var _candidates: Observable<[String]> = Observable<[String]>([])
-    private var _numberedCandidates: [String] = []
-
+    var composeString: String = ""
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
 
+    private var _candidates: [String] = []
+    private var _numberedCandidates: [String] = []
+
     var candidates: [String] {
-        get { return _candidates.value }
+        get { return _candidates }
         set {
-            _candidates.value = newValue
+            _candidates = newValue
             _numberedCandidates = []
-            for i in 0..<_candidates.value.count {
-                _numberedCandidates.append("\(i+1). \(_candidates.value[i])")
+            for i in 0..<_candidates.count {
+                _numberedCandidates.append("\(i+1). \(_candidates[i])")
             }
         }
     }
@@ -42,8 +42,8 @@ class InputContext {
     func clean() {
         currentIndex = 0
         matchedLength = []
-        composeString.value = ""
-        _candidates.value = []
+        composeString = ""
+        _candidates = []
         _numberedCandidates = []
     }
 }
