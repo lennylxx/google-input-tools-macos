@@ -22,7 +22,6 @@ jobs:
         # uses: devbotsxyz/xcode-build@2138f429e7bebe426d65985aca0dbad5370aa697
         uses: devbotsxyz/xcode-build@v1.0.0
         with:
-          project: GoogleInputTools
           scheme: GoogleInputTools
           configuration: Debug
           code-sign-identity: "-"
