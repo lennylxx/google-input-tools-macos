@@ -51,6 +51,8 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [ ] Skin display
   - [ ] Skin manager
 - [x] Cloud engine
+  - [ ] Cancel previous unnecessary web requests to speed up
 - [ ] Chinese/English mode toggle
+- [ ] Fullwidth form of punctuation in Chinese mode
 - [ ] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
 - [ ] Allow to use HTTP/SOCKS proxy
