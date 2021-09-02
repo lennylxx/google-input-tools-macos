@@ -314,7 +314,7 @@
 				CODE_SIGN_ENTITLEMENTS = GoogleInputTools/GoogleInputTools.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = "/Users/longl/Library/Input Methods/";
+				CONFIGURATION_BUILD_DIR = $SYMROOT/$CONFIGURATION;
 				DEVELOPMENT_ASSET_PATHS = "\"GoogleInputTools/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = GoogleInputTools/Info.plist;
@@ -337,7 +337,7 @@
 				CODE_SIGN_ENTITLEMENTS = GoogleInputTools/GoogleInputTools.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = "";
+				CONFIGURATION_BUILD_DIR = $SYMROOT/$CONFIGURATION;
 				DEVELOPMENT_ASSET_PATHS = "\"GoogleInputTools/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = GoogleInputTools/Info.plist;
