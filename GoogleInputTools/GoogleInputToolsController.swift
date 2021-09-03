@@ -66,7 +66,10 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     func updateCandidatesWindow() {
+        NSLog("\(#function)")
+
         let compString = InputContext.shared.composeString
+        NSLog("compString=\(compString)")
 
         // set text at cursor
         let range = NSMakeRange(NSNotFound, NSNotFound)
@@ -146,13 +149,19 @@ class GoogleInputToolsController: IMKInputController {
         let candidate = candidateString?.string ?? ""
         let id = InputContext.shared.candidates.firstIndex(of: candidate) ?? 0
 
-        NSLog("candidate index: \(id)")
+        NSLog("candidate=\(candidate), index=\(id)")
         InputContext.shared.currentIndex = id
         commitCandidate(client: self.client())
     }
 
     override func candidateSelectionChanged(_ candidateString: NSAttributedString!) {
         NSLog("\(#function)")
+
+        let candidate = candidateString?.string ?? ""
+        let id = InputContext.shared.candidates.firstIndex(of: candidate) ?? 0
+
+        NSLog("candidate=\(candidate), index=\(id)")
+        InputContext.shared.currentIndex = id
     }
 
     override func commitComposition(_ sender: Any!) {
@@ -215,6 +224,16 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
+            else if event.keyCode == kVK_ANSI_Equal {
+                self.candidates.pageDown(sender)
+                return true
+            }
+
+            else if event.keyCode == kVK_ANSI_Minus {
+                self.candidates.pageUp(sender)
+                return true
+            }
+
             else if event.keyCode == kVK_Delete && InputContext.shared.composeString.count > 0 {
                 InputContext.shared.composeString.removeLast()
                 updateCandidatesWindow()
@@ -238,7 +257,9 @@ class GoogleInputToolsController: IMKInputController {
                 self.candidates.update()
                 self.candidates.hide()
                 return true
-            } else {
+            }
+
+            else {
                 commitComposedString(client: sender)
                 return false
             }
