@@ -28,18 +28,25 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func activateServer(_ sender: Any!) {
-        NSLog("\(#function)(\(sender))")
-        super.activateServer(sender)
+        guard let client = sender as? IMKTextInput else {
+            return
+        }
+
+        NSLog("\(#function)(\(client))")
+
+        client.overrideKeyboard(withKeyboardNamed: "com.apple.keylayout.US")
     }
 
     override func deactivateServer(_ sender: Any) {
-        NSLog("\(#function)(\(sender))")
+        guard let client = sender as? IMKTextInput else {
+            return
+        }
+
+        NSLog("\(#function)(\(client))")
 
         InputContext.shared.clean()
         self.candidates.update()
         self.candidates.hide()
-
-        super.deactivateServer(sender)
     }
 
     func getAndRenderCandidates(_ compString: String) {
@@ -78,7 +85,7 @@ class GoogleInputToolsController: IMKInputController {
         if UISettings.SystemUI {
             if compString.count > 0 {
                 self.getAndRenderCandidates(compString)
-                self.candidates.show()
+                self.candidates.show(kIMKLocateCandidatesBelowHint)
             } else {
                 self.candidates.hide()
             }
@@ -166,6 +173,20 @@ class GoogleInputToolsController: IMKInputController {
 
     override func commitComposition(_ sender: Any!) {
         NSLog("\(#function)")
+    }
+
+    override func updateComposition() {
+        NSLog("\(#function)")
+    }
+
+    override func cancelComposition() {
+        NSLog("\(#function)")
+    }
+
+    override func selectionRange() -> NSRange {
+        NSLog("\(#function)")
+
+        return NSMakeRange(NSNotFound, NSNotFound)
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
