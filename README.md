@@ -34,12 +34,13 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
 ## Progress
 
 - [x] Basic input handling logic
-  - [x] `Space` key to commit first candidate
+  - [x] `Space` key to commit current highlighted candidate
   - [x] `Return` key to ignore candidate and commit input string
   - [x] Number keys (`1`-`9`) to select candidate and commit
   - [x] Continue to show new candidates after partial matched candidate is selected and committed
   - [x] `Backspace` key to remove last composing letter
   - [x] `Esc` key to cancel composing
+  - [ ] `-` and `=` keys to page up and page down candidate list respectively
 - [x] System UI
 - [x] Basic custom UI
   - [x] Numbered candidates
