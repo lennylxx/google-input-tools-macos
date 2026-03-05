@@ -89,18 +89,7 @@ class CloudInputEngine {
 
             let json = try? JSONSerialization.jsonObject(with: data, options: [])
 
-            let response = json as! [Any]
-            let status = response[0] as! String
-
-            if status == "SUCCESS" {
-                let candidateObject = (response[1] as! [Any])[0] as! [Any]
-
-                // let inputText = candidateObject[0] as! String
-                let candidateArray = candidateObject[1] as! [String]
-                let candidateMeta = candidateObject[3] as! [String: Any]
-
-                // let annotation = candidateMeta["annotation"] as! Array<String>
-                let matchedLength = candidateMeta["matched_length"] as? [Int]
+            if let (candidateArray, matchedLength) = CloudInputEngine.parseResponse(json) {
                 complete(candidateArray, matchedLength)
             }
         }
@@ -108,6 +97,24 @@ class CloudInputEngine {
         taskLock.unlock()
 
         task.resume()
+    }
+
+    static func parseResponse(_ json: Any?) -> ([String], [Int]?)? {
+        guard let response = json as? [Any],
+              let status = response[0] as? String,
+              status == "SUCCESS",
+              let resultArray = response[1] as? [Any],
+              let candidateObject = resultArray.first as? [Any],
+              let candidateArray = candidateObject[1] as? [String],
+              let candidateMeta = candidateObject[3] as? [String: Any]
+        else {
+            return nil
+        }
+
+        // let inputText = candidateObject[0] as! String
+        // let annotation = candidateMeta["annotation"] as! Array<String>
+        let matchedLength = candidateMeta["matched_length"] as? [Int]
+        return (candidateArray, matchedLength)
     }
 
 }

@@ -23,6 +23,8 @@
 		602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */; };
 		643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */; };
 		A1B2C3D4E5F6071829304150 /* PreferencesWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */; };
+B1A2C3D4E5F60718293041B1 /* InputContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */; };
+B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,10 +47,31 @@
 		602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemUICandidateManager.swift; sourceTree = "<group>"; };
 		643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomUICandidateManager.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindow.swift; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContextTests.swift; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngineTests.swift; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293041A1 /* GoogleInputToolsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GoogleInputToolsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+
+/* Begin PBXContainerItemProxy section */
+		B1A2C3D4E5F60718293041A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4DCA723E26D2331700E53537 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4DCA724526D2331700E53537;
+			remoteInfo = GoogleInputTools;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4DCA724326D2331700E53537 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1A2C3D4E5F60718293041A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -62,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				4DCA724826D2331700E53537 /* GoogleInputTools */,
+				B1A2C3D4E5F60718293041A2 /* GoogleInputToolsTests */,
 				4DCA724726D2331700E53537 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +94,7 @@
 			isa = PBXGroup;
 			children = (
 				4DCA724626D2331700E53537 /* GoogleInputTools.app */,
+				B1A2C3D4E5F60718293041A1 /* GoogleInputToolsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -107,6 +132,15 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		B1A2C3D4E5F60718293041A2 /* GoogleInputToolsTests */ = {
+			isa = PBXGroup;
+			children = (
+				B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */,
+				B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */,
+			);
+			path = GoogleInputToolsTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -126,6 +160,23 @@
 			productName = GoogleInputTools;
 			productReference = 4DCA724626D2331700E53537 /* GoogleInputTools.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B1A2C3D4E5F60718293041A0 /* GoogleInputToolsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1A2C3D4E5F60718293041AA /* Build configuration list for PBXNativeTarget "GoogleInputToolsTests" */;
+			buildPhases = (
+				B1A2C3D4E5F60718293041A3 /* Sources */,
+				B1A2C3D4E5F60718293041A4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B1A2C3D4E5F60718293041A6 /* PBXTargetDependency */,
+			);
+			name = GoogleInputToolsTests;
+			productName = GoogleInputToolsTests;
+			productReference = B1A2C3D4E5F60718293041A1 /* GoogleInputToolsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -156,6 +207,7 @@
 			projectRoot = "";
 			targets = (
 				4DCA724526D2331700E53537 /* GoogleInputTools */,
+				B1A2C3D4E5F60718293041A0 /* GoogleInputToolsTests */,
 			);
 		};
 /* End PBXProject section */
@@ -194,8 +246,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+
+/* Begin PBXSourcesBuildPhase section (Tests) */
+		B1A2C3D4E5F60718293041A3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1A2C3D4E5F60718293041B1 /* InputContextTests.swift in Sources */,
+				B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+
+/* Begin PBXTargetDependency section */
+		B1A2C3D4E5F60718293041A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4DCA724526D2331700E53537 /* GoogleInputTools */;
+			targetProxy = B1A2C3D4E5F60718293041A7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 /* Begin PBXVariantGroup section */
 		4DCA725226D2331900E53537 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
@@ -375,6 +446,46 @@
 			};
 			name = Release;
 		};
+		B1A2C3D4E5F60718293041A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputToolsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GoogleInputTools.app/Contents/MacOS/GoogleInputTools";
+			};
+			name = Debug;
+		};
+		B1A2C3D4E5F60718293041A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputToolsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GoogleInputTools.app/Contents/MacOS/GoogleInputTools";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -392,6 +503,15 @@
 			buildConfigurations = (
 				4DCA725A26D2331900E53537 /* Debug */,
 				4DCA725B26D2331900E53537 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B1A2C3D4E5F60718293041AA /* Build configuration list for PBXNativeTarget "GoogleInputToolsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1A2C3D4E5F60718293041A8 /* Debug */,
+				B1A2C3D4E5F60718293041A9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
