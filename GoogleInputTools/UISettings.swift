@@ -53,8 +53,8 @@ class UISettings {
 
     // MARK: - Custom UI visual constants
 
-    static let WindowPaddingX: CGFloat = 4
-    static let WindowPaddingY: CGFloat = 6
+    static let WindowPaddingX: CGFloat = 6
+    static let WindowPaddingY: CGFloat = 8
     static let TextColor = NSColor.white
     static let TextBackground = NSColor.black
     static let SelectionBackground = NSColor.systemBlue
