@@ -67,6 +67,13 @@ class InputContext {
         return page.enumerated().map { "\($0.offset + 1). \($0.element)" }
     }
 
+    var pageIndicator: String {
+        guard totalPages > 1 else { return "" }
+        let up = currentPage > 0 ? "▲" : "△"
+        let down = currentPage < totalPages - 1 ? "▼" : "▽"
+        return " \(up) \(down)"
+    }
+
     var currentNumberedPageCandidate: String {
         let page = numberedPageCandidates
         let idx = currentPageIndex

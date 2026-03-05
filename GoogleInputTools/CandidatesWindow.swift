@@ -69,29 +69,16 @@ class CandidatesWindow: NSWindow {
 
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
+        let size = self._view.preferredSize
 
-        let context = InputContext.shared
-        let pageCandidates = context.numberedPageCandidates
-        let pageInfo = context.totalPages > 1 ? " \(context.currentPage + 1)/\(context.totalPages)" : ""
-        let text = pageCandidates.joined(separator: " ") + pageInfo
-        let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: UISettings.font
-        ]
-
-        textToPaint.addAttributes(attributes, range: NSMakeRange(0, text.count))
-
-        // do not paint by default
         var rect: NSRect = NSZeroRect
 
-        // calculate candidate window position and size
-        if text.count > 0 {
+        if size.width > 0 {
             rect = NSMakeRect(
                 caretPosition.x + dragOffset.x,
-                caretPosition.y - textToPaint.size().height - UISettings.WindowPaddingY * 2 + dragOffset.y,
-                textToPaint.size().width + UISettings.WindowPaddingX * 2,
-                textToPaint.size().height + UISettings.WindowPaddingY * 2)
+                caretPosition.y - size.height + dragOffset.y,
+                size.width,
+                size.height)
         }
 
         NSLog(
