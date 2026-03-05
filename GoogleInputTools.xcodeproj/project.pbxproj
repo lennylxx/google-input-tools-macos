@@ -3,13 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		4D07405326E007B5007FE390 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D07405226E007B5007FE390 /* InfoPlist.strings */; };
 		4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */; };
 		4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D73286B26D297BD00970795 /* CloudInputEngine.swift */; };
+		4DA371B42CF80E730055F12E /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DA371B32CF80E6F0055F12E /* Utilities.swift */; };
 		4DCA724E26D2331900E53537 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA724D26D2331900E53537 /* Assets.xcassets */; };
 		4DCA725126D2331900E53537 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725026D2331900E53537 /* Preview Assets.xcassets */; };
 		4DCA725426D2331900E53537 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA725226D2331900E53537 /* Main.storyboard */; };
@@ -24,6 +25,7 @@
 		4D07405226E007B5007FE390 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 		4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISettings.swift; sourceTree = "<group>"; };
 		4D73286B26D297BD00970795 /* CloudInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngine.swift; sourceTree = "<group>"; };
+		4DA371B32CF80E6F0055F12E /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		4DCA724626D2331700E53537 /* GoogleInputTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GoogleInputTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DCA724D26D2331900E53537 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4DCA725026D2331900E53537 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 				4DCA726226D249F600E53537 /* CandidatesWindow.swift */,
 				4DCA726426D24A1700E53537 /* CandidatesView.swift */,
 				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
+				4DA371B32CF80E6F0055F12E /* Utilities.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
 				4D07405226E007B5007FE390 /* InfoPlist.strings */,
 			);
@@ -118,8 +121,9 @@
 		4DCA723E26D2331700E53537 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1250;
-				LastUpgradeCheck = 1250;
+				LastUpgradeCheck = 1610;
 				TargetAttributes = {
 					4DCA724526D2331700E53537 = {
 						CreatedOnToolsVersion = 12.5.1;
@@ -169,6 +173,7 @@
 				4DCA725D26D233B700E53537 /* main.swift in Sources */,
 				4DCA726126D246DF00E53537 /* InputContext.swift in Sources */,
 				4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */,
+				4DA371B42CF80E730055F12E /* Utilities.swift in Sources */,
 				4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -221,9 +226,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -282,9 +289,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -311,6 +320,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = $SYMROOT/$CONFIGURATION;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GoogleInputTools/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = GoogleInputTools/Info.plist;
@@ -318,7 +328,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputTools;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -334,6 +344,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = $SYMROOT/$CONFIGURATION;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GoogleInputTools/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = GoogleInputTools/Info.plist;
@@ -341,7 +352,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputTools;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

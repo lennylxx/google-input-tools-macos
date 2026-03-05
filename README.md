@@ -15,7 +15,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   git clone https://github.com/lennylxx/google-input-tools-macos
   cd google-input-tools-macos
   ./build.sh
-  ``` 
+  ```
 
 > The output will be `~/Library/Input\ Methods/GoogleInputTools.app`
 

@@ -10,6 +10,9 @@ import InputMethodKit
 
 class GoogleInputToolsController: IMKInputController {
 
+    // Prevent ARC from deallocating controllers while InputMethodKit still holds unretained references
+    private static var retainedControllers = [GoogleInputToolsController]()
+
     private let candidates: IMKCandidates
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
@@ -19,6 +22,8 @@ class GoogleInputToolsController: IMKInputController {
             server: server, panelType: kIMKSingleRowSteppingCandidatePanel)
 
         super.init(server: server, delegate: delegate, client: inputClient)
+
+        Self.retainedControllers.append(self)
     }
 
     override func client() -> (IMKTextInput & NSObjectProtocol)! {
@@ -147,7 +152,7 @@ class GoogleInputToolsController: IMKInputController {
     override func candidates(_ sender: Any!) -> [Any]! {
         NSLog("\(#function)")
 
-        return InputContext.shared.candidates
+        return InputContext.shared.currentPageCandidates
     }
 
     override func candidateSelected(_ candidateString: NSAttributedString!) {
@@ -197,7 +202,7 @@ class GoogleInputToolsController: IMKInputController {
             let inputString = event.characters!
             let key = inputString.first!
 
-            NSLog("key=%@", String(key))
+            NSLog("key=\(Utilities.TranslateKey(event)), keyCode=\(event.keyCode)")
 
             if key.isLetter {
                 InputContext.shared.composeString.append(inputString)
@@ -207,10 +212,13 @@ class GoogleInputToolsController: IMKInputController {
 
             else if key.isNumber {
                 let keyValue = Int(key.hexDigitValue!)
-                let count = InputContext.shared.candidates.count
+                let context = InputContext.shared
+                let pageCandidates = context.currentPageCandidates
 
-                if keyValue >= 1 && keyValue <= count {
-                    InputContext.shared.currentIndex = keyValue - 1
+                NSLog("keyValue=\(keyValue), page=\(context.currentPage), pageCount=\(pageCandidates.count)")
+
+                if keyValue >= 1 && keyValue <= pageCandidates.count {
+                    context.currentIndex = context.absoluteIndex(forPageIndex: keyValue - 1)
                     commitCandidate(client: sender)
                     return true
                 }
@@ -245,13 +253,25 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            else if event.keyCode == kVK_ANSI_Equal {
-                self.candidates.pageDown(sender)
+            else if (event.keyCode == kVK_ANSI_Equal || event.keyCode == kVK_DownArrow)
+                && InputContext.shared.candidates.count > 0
+            {
+                let context = InputContext.shared
+                if context.currentPage < context.totalPages - 1 {
+                    context.currentPage += 1
+                    self.candidates.update()
+                }
                 return true
             }
 
-            else if event.keyCode == kVK_ANSI_Minus {
-                self.candidates.pageUp(sender)
+            else if (event.keyCode == kVK_ANSI_Minus || event.keyCode == kVK_UpArrow)
+                && InputContext.shared.candidates.count > 0
+            {
+                let context = InputContext.shared
+                if context.currentPage > 0 {
+                    context.currentPage -= 1
+                    self.candidates.update()
+                }
                 return true
             }
 
@@ -288,4 +308,68 @@ class GoogleInputToolsController: IMKInputController {
 
         return false
     }
+
+    func simulateControlSpace() {
+        let controlDownEvent = NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.control],  // Pressing Control key
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "",
+            charactersIgnoringModifiers: "",
+            isARepeat: false,
+            keyCode: 59  // Key code for Control key
+        )
+
+        let spaceDownEvent = NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.control],  // Control is still held down
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: " ",
+            charactersIgnoringModifiers: " ",
+            isARepeat: false,
+            keyCode: 49  // Key code for Space key
+        )
+
+        // release the Space key
+        let spaceUpEvent = NSEvent.keyEvent(
+            with: .keyUp,
+            location: .zero,
+            modifierFlags: [.control],  // Control is still held down
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: " ",
+            charactersIgnoringModifiers: " ",
+            isARepeat: false,
+            keyCode: 49  // Key code for Space key
+        )
+
+        // release the Control key
+        let controlUpEvent = NSEvent.keyEvent(
+            with: .keyUp,
+            location: .zero,
+            modifierFlags: [],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "",
+            charactersIgnoringModifiers: "",
+            isARepeat: false,
+            keyCode: 59  // Key code for Control key
+        )
+
+        // Post the events to simulate pressing Control + Space
+
+        //NSEvent.post(controlDownEvent)
+        //NSEvent.post(spaceDownEvent)
+        //NSEvent.post(spaceUpEvent)
+        //NSEvent.post(controlUpEvent)
+    }
+
 }
