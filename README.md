@@ -41,11 +41,12 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] `Backspace` key to remove last composing letter
   - [x] `Esc` key to cancel composing
   - [x] `-`/`↑` and `=`/`↓` keys to page up and page down candidate list respectively
+  - [x] Arrow keys `←`/`→` to switch between highlighted candidate
+- [x] Chinese/English mode toggle (`Shift` key)
 - [x] System UI
 - [x] Basic custom UI
   - [x] Numbered candidates
   - [x] Highlight current selected candidate
-  - [x] Arrow keys `←`/`→` to switch between highlighted candidate
   - [ ] Group candidates into multiple pages, each page with at most `10` candidates
   - [ ] Page up and page down button
   - [ ] Draggable candidate window
@@ -56,7 +57,6 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [ ] Skin manager
 - [x] Cloud engine
   - [ ] Cancel previous unnecessary web requests to speed up
-- [x] Chinese/English mode toggle
 - [ ] Fullwidth form of punctuation in Chinese mode
 - [ ] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
 - [ ] Allow to use HTTP/SOCKS proxy

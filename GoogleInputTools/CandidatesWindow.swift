@@ -65,8 +65,8 @@ class CandidatesWindow: NSWindow {
 
         self.setFrame(rect, display: true)
 
-        // adjust candidate view
-        self._view.setNeedsDisplay(rect)
+        // force candidate view to redraw
+        self._view.needsDisplay = true
     }
 
     func getCaretPosition(sender: IMKTextInput) -> NSPoint {

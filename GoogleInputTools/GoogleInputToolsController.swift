@@ -260,7 +260,9 @@ class GoogleInputToolsController: IMKInputController {
                 return false
             }
 
-            else if event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow {
+            else if (event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow)
+                && InputContext.shared.candidates.count > 0
+            {
 
                 if UISettings.SystemUI {
                     self.candidates.interpretKeyEvents([event])
