@@ -14,6 +14,7 @@ class InputContext {
     var currentIndex: Int = 0
     var currentPage: Int = 0
     let pageSize: Int = 9
+    var isEnglishMode: Bool = false
 
     private var _candidates: [String] = []
     private var _numberedCandidates: [String] = []

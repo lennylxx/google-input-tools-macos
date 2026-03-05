@@ -194,8 +194,34 @@ class GoogleInputToolsController: IMKInputController {
         return NSMakeRange(NSNotFound, NSNotFound)
     }
 
+    override func recognizedEvents(_ sender: Any!) -> Int {
+        let events: NSEvent.EventTypeMask = [.keyDown, .flagsChanged]
+        return Int(events.rawValue)
+    }
+
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
         NSLog("%@", event)
+
+        // Bare Shift key toggles Chinese/English mode (on key release)
+        if event.type == NSEvent.EventType.flagsChanged {
+            if (event.keyCode == kVK_Shift || event.keyCode == kVK_RightShift)
+                && !event.modifierFlags.contains(.shift)
+            {
+                let context = InputContext.shared
+                context.isEnglishMode = !context.isEnglishMode
+                NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
+
+                if context.isEnglishMode && context.composeString.count > 0 {
+                    commitComposedString(client: sender)
+                }
+                return true
+            }
+        }
+
+        // In English mode, pass all keys through
+        if InputContext.shared.isEnglishMode {
+            return false
+        }
 
         if event.type == NSEvent.EventType.keyDown {
 
@@ -281,7 +307,7 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            else if (event.keyCode == kVK_Shift || event.keyCode == kVK_Return)
+            else if event.keyCode == kVK_Return
                 && InputContext.shared.composeString.count > 0
             {
                 commitComposedString(client: sender)

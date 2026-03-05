@@ -40,7 +40,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Continue to show new candidates after partial matched candidate is selected and committed
   - [x] `Backspace` key to remove last composing letter
   - [x] `Esc` key to cancel composing
-  - [ ] `-` and `=` keys to page up and page down candidate list respectively
+  - [x] `-`/`↑` and `=`/`↓` keys to page up and page down candidate list respectively
 - [x] System UI
 - [x] Basic custom UI
   - [x] Numbered candidates
@@ -56,7 +56,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [ ] Skin manager
 - [x] Cloud engine
   - [ ] Cancel previous unnecessary web requests to speed up
-- [ ] Chinese/English mode toggle
+- [x] Chinese/English mode toggle
 - [ ] Fullwidth form of punctuation in Chinese mode
 - [ ] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
 - [ ] Allow to use HTTP/SOCKS proxy
