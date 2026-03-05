@@ -97,6 +97,7 @@ class GoogleInputToolsController: IMKInputController {
                 InputContext.shared.matchedLength = matchedLength
 
                 self.uiManager.updateCandidates(client: self.client())
+                self.uiManager.show()
             }
         }
     }
@@ -113,7 +114,6 @@ class GoogleInputToolsController: IMKInputController {
 
         if compString.count > 0 {
             self.getAndRenderCandidates(compString)
-            uiManager.show()
         } else {
             uiManager.reset()
         }
