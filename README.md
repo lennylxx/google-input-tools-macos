@@ -49,7 +49,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Highlight current selected candidate
   - [x] Group candidates into multiple pages, each page with at most `9` candidates
   - [x] Page up and page down
-  - [ ] Draggable candidate window
+  - [x] Draggable candidate window
 - [ ] Advanced custom UI
   - [ ] Display tokenized input string and candidates
   - [ ] Settings for font name, font size, color, etc.

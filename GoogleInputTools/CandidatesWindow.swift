@@ -15,6 +15,12 @@ class CandidatesWindow: NSWindow {
 
     var _view: CandidatesView
 
+    // Drag offset relative to caret position, persists across updates
+    private var dragOffset: NSPoint = .zero
+    private var isDragging = false
+    private var dragStartMouse: NSPoint = .zero
+    private var dragStartOrigin: NSPoint = .zero
+
     override init(
         contentRect: NSRect, styleMask style: NSWindow.StyleMask,
         backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool
@@ -28,10 +34,37 @@ class CandidatesWindow: NSWindow {
         self.isOpaque = false
         self.level = NSWindow.Level.floating
         self.backgroundColor = NSColor.clear
+        self.isMovableByWindowBackground = true
 
         self._view = CandidatesView.init(frame: self.frame)
         self.contentView = _view
         self.orderFront(nil)
+    }
+
+    override var canBecomeKey: Bool { return true }
+
+    override func mouseDown(with event: NSEvent) {
+        isDragging = true
+        dragStartMouse = NSEvent.mouseLocation
+        dragStartOrigin = self.frame.origin
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard isDragging else { return }
+        let current = NSEvent.mouseLocation
+        let newOrigin = NSMakePoint(
+            dragStartOrigin.x + (current.x - dragStartMouse.x),
+            dragStartOrigin.y + (current.y - dragStartMouse.y))
+        self.setFrameOrigin(newOrigin)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if isDragging {
+            let current = NSEvent.mouseLocation
+            dragOffset.x += current.x - dragStartMouse.x
+            dragOffset.y += current.y - dragStartMouse.y
+            isDragging = false
+        }
     }
 
     func update(sender: IMKTextInput) {
@@ -55,8 +88,8 @@ class CandidatesWindow: NSWindow {
         // calculate candidate window position and size
         if text.count > 0 {
             rect = NSMakeRect(
-                caretPosition.x,
-                caretPosition.y - textToPaint.size().height - UISettings.WindowPaddingY * 2,
+                caretPosition.x + dragOffset.x,
+                caretPosition.y - textToPaint.size().height - UISettings.WindowPaddingY * 2 + dragOffset.y,
                 textToPaint.size().width + UISettings.WindowPaddingX * 2,
                 textToPaint.size().height + UISettings.WindowPaddingY * 2)
         }
@@ -65,7 +98,10 @@ class CandidatesWindow: NSWindow {
             "CandidatesWindow::update rect: (%.0f, %.0f, %.0f, %.0f)",
             rect.origin.x, rect.origin.y, rect.width, rect.height)
 
-        self.setFrame(rect, display: true)
+        // Don't reposition while user is dragging
+        if !isDragging {
+            self.setFrame(rect, display: true)
+        }
 
         // force candidate view to redraw
         self._view.needsDisplay = true
