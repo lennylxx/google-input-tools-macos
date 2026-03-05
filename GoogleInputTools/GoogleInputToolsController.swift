@@ -295,6 +295,8 @@ class GoogleInputToolsController: IMKInputController {
 
             else if event.keyCode == kVK_Escape {
                 InputContext.shared.clean()
+                let range = NSMakeRange(NSNotFound, NSNotFound)
+                client().setMarkedText("", selectionRange: range, replacementRange: range)
                 self.candidates.update()
                 self.candidates.hide()
                 return true
