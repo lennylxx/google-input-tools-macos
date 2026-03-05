@@ -13,13 +13,20 @@ class GoogleInputToolsController: IMKInputController {
     // Prevent ARC from deallocating controllers while InputMethodKit still holds unretained references
     private static var retainedControllers = [GoogleInputToolsController]()
 
-    private let candidates: IMKCandidates
+    private let uiManager: CandidateUIManager
+    private let systemUIManager: SystemUICandidateManager?
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
         NSLog("\(#function)(\(inputClient))")
 
-        self.candidates = IMKCandidates(
-            server: server, panelType: kIMKSingleRowSteppingCandidatePanel)
+        if UISettings.SystemUI {
+            let sysManager = SystemUICandidateManager(server: server)
+            self.uiManager = sysManager
+            self.systemUIManager = sysManager
+        } else {
+            self.uiManager = CustomUICandidateManager()
+            self.systemUIManager = nil
+        }
 
         super.init(server: server, delegate: delegate, client: inputClient)
 
@@ -50,8 +57,7 @@ class GoogleInputToolsController: IMKInputController {
         NSLog("\(#function)(\(client))")
 
         InputContext.shared.clean()
-        self.candidates.update()
-        self.candidates.hide()
+        uiManager.reset()
     }
 
     func getAndRenderCandidates(_ compString: String) {
@@ -67,12 +73,7 @@ class GoogleInputToolsController: IMKInputController {
                 InputContext.shared.candidates = candidates
                 InputContext.shared.matchedLength = matchedLength
 
-                // update candidates window
-                if UISettings.SystemUI {
-                    self.candidates.update()
-                } else {
-                    CandidatesWindow.shared.update(sender: self.client())
-                }
+                self.uiManager.updateCandidates(client: self.client())
             }
         }
     }
@@ -87,21 +88,11 @@ class GoogleInputToolsController: IMKInputController {
         let range = NSMakeRange(NSNotFound, NSNotFound)
         client().setMarkedText(compString, selectionRange: range, replacementRange: range)
 
-        if UISettings.SystemUI {
-            if compString.count > 0 {
-                self.getAndRenderCandidates(compString)
-                self.candidates.show(kIMKLocateCandidatesBelowHint)
-            } else {
-                self.candidates.hide()
-            }
+        if compString.count > 0 {
+            self.getAndRenderCandidates(compString)
+            uiManager.show()
         } else {
-            if compString.count > 0 {
-                self.getAndRenderCandidates(compString)
-                CandidatesWindow.shared.show()
-            } else {
-                InputContext.shared.currentIndex = 0
-                CandidatesWindow.shared.hide()
-            }
+            uiManager.reset()
         }
     }
 
@@ -111,12 +102,7 @@ class GoogleInputToolsController: IMKInputController {
         client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
 
         InputContext.shared.clean()
-        self.candidates.update()
-        self.candidates.hide()
-
-        if !UISettings.SystemUI {
-            CandidatesWindow.shared.update(sender: client())
-        }
+        uiManager.reset()
     }
 
     func commitCandidate(client sender: Any!) {
@@ -143,26 +129,20 @@ class GoogleInputToolsController: IMKInputController {
         InputContext.shared.clean()
         InputContext.shared.composeString = String(remain)
         updateCandidatesWindow()
-
-        if !UISettings.SystemUI {
-            CandidatesWindow.shared.update(sender: client())
-        }
     }
 
     override func candidates(_ sender: Any!) -> [Any]! {
         NSLog("\(#function)")
 
-        return InputContext.shared.candidates
+        return systemUIManager?.allCandidates() ?? InputContext.shared.candidates
     }
 
     override func candidateSelected(_ candidateString: NSAttributedString!) {
         NSLog("\(#function)")
 
         let candidate = candidateString?.string ?? ""
-        let id = InputContext.shared.candidates.firstIndex(of: candidate) ?? 0
-
-        NSLog("candidate=\(candidate), index=\(id)")
-        InputContext.shared.currentIndex = id
+        NSLog("candidate=\(candidate)")
+        systemUIManager?.candidateSelected(candidate)
         commitCandidate(client: self.client())
     }
 
@@ -170,18 +150,7 @@ class GoogleInputToolsController: IMKInputController {
         NSLog("\(#function)")
 
         let candidate = candidateString?.string ?? ""
-        let context = InputContext.shared
-        let id = context.candidates.firstIndex(of: candidate) ?? 0
-
-        // Detect page change: if index jumped, update visible page start
-        if abs(id - context.currentIndex) > 1 {
-            context.visiblePageStart = id
-        } else if id < context.visiblePageStart {
-            context.visiblePageStart = id
-        }
-
-        NSLog("candidate=\(candidate), index=\(id), visiblePageStart=\(context.visiblePageStart)")
-        context.currentIndex = id
+        systemUIManager?.candidateSelectionChanged(candidate)
     }
 
     override func commitComposition(_ sender: Any!) {
@@ -246,92 +215,31 @@ class GoogleInputToolsController: IMKInputController {
 
             else if key.isNumber {
                 let keyValue = Int(key.hexDigitValue!)
-                let context = InputContext.shared
-
-                if UISettings.SystemUI {
-                    let index = context.visiblePageStart + keyValue - 1
-
-                    NSLog("keyValue=\(keyValue), visiblePageStart=\(context.visiblePageStart), index=\(index)")
-
-                    if keyValue >= 1 && index < context.candidates.count {
-                        context.currentIndex = index
-                        commitCandidate(client: sender)
-                        return true
-                    }
-                } else {
-                    let pageCandidates = context.currentPageCandidates
-
-                    NSLog("keyValue=\(keyValue), page=\(context.currentPage), pageCount=\(pageCandidates.count)")
-
-                    if keyValue >= 1 && keyValue <= pageCandidates.count {
-                        context.currentIndex = context.absoluteIndex(forPageIndex: keyValue - 1)
-                        commitCandidate(client: sender)
-                        return true
-                    }
+                if uiManager.selectByNumber(keyValue: keyValue) {
+                    commitCandidate(client: sender)
+                    return true
                 }
-
                 return false
             }
 
             else if (event.keyCode == kVK_LeftArrow || event.keyCode == kVK_RightArrow)
                 && InputContext.shared.candidates.count > 0
             {
-
-                if UISettings.SystemUI {
-                    self.candidates.interpretKeyEvents([event])
-                } else {
-                    let context = InputContext.shared
-                    let pageStart = context.currentPage * context.pageSize
-                    let pageEnd = min(pageStart + context.pageSize, context.candidates.count) - 1
-
-                    if event.keyCode == kVK_LeftArrow && context.currentIndex > pageStart {
-                        context.currentIndex -= 1
-                    }
-
-                    if event.keyCode == kVK_RightArrow && context.currentIndex < pageEnd {
-                        context.currentIndex += 1
-                    }
-
-                    // keep the marked text unchanged
-                    let compString = context.composeString
-                    let range = NSMakeRange(NSNotFound, NSNotFound)
-                    self.client().setMarkedText(
-                        compString, selectionRange: range, replacementRange: range)
-                    CandidatesWindow.shared.update(sender: self.client())
-                }
-
+                uiManager.handleArrowKey(event: event, client: self.client())
                 return true
             }
 
             else if (event.keyCode == kVK_ANSI_Equal || event.keyCode == kVK_DownArrow)
                 && InputContext.shared.candidates.count > 0
             {
-                if UISettings.SystemUI {
-                    self.candidates.pageDown(sender)
-                } else {
-                    let context = InputContext.shared
-                    if context.currentPage < context.totalPages - 1 {
-                        context.currentPage += 1
-                        context.currentIndex = context.currentPage * context.pageSize
-                        CandidatesWindow.shared.update(sender: self.client())
-                    }
-                }
+                uiManager.pageDown(sender: sender, client: self.client())
                 return true
             }
 
             else if (event.keyCode == kVK_ANSI_Minus || event.keyCode == kVK_UpArrow)
                 && InputContext.shared.candidates.count > 0
             {
-                if UISettings.SystemUI {
-                    self.candidates.pageUp(sender)
-                } else {
-                    let context = InputContext.shared
-                    if context.currentPage > 0 {
-                        context.currentPage -= 1
-                        context.currentIndex = context.currentPage * context.pageSize
-                        CandidatesWindow.shared.update(sender: self.client())
-                    }
-                }
+                uiManager.pageUp(sender: sender, client: self.client())
                 return true
             }
 
@@ -357,9 +265,7 @@ class GoogleInputToolsController: IMKInputController {
                 InputContext.shared.clean()
                 let range = NSMakeRange(NSNotFound, NSNotFound)
                 client().setMarkedText("", selectionRange: range, replacementRange: range)
-                self.candidates.update()
-                self.candidates.hide()
-                CandidatesWindow.shared.hide()
+                uiManager.reset()
                 return true
             }
 

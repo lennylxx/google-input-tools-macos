@@ -19,6 +19,9 @@
 		4DCA726126D246DF00E53537 /* InputContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726026D246DF00E53537 /* InputContext.swift */; };
 		4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726226D249F600E53537 /* CandidatesWindow.swift */; };
 		4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA726426D24A1700E53537 /* CandidatesView.swift */; };
+		02DB9849E580370B9789D2F9 /* CandidateUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */; };
+		602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */; };
+		643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +40,9 @@
 		4DCA726026D246DF00E53537 /* InputContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContext.swift; sourceTree = "<group>"; };
 		4DCA726226D249F600E53537 /* CandidatesWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidatesWindow.swift; sourceTree = "<group>"; };
 		4DCA726426D24A1700E53537 /* CandidatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidatesView.swift; sourceTree = "<group>"; };
+		02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateUIManager.swift; sourceTree = "<group>"; };
+		602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemUICandidateManager.swift; sourceTree = "<group>"; };
+		643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomUICandidateManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +88,9 @@
 				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
 				4DA371B32CF80E6F0055F12E /* Utilities.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
+				02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */,
+				602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */,
+				643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */,
 				4D07405226E007B5007FE390 /* InfoPlist.strings */,
 			);
 			path = GoogleInputTools;
@@ -175,6 +184,9 @@
 				4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */,
 				4DA371B42CF80E730055F12E /* Utilities.swift in Sources */,
 				4DCA726526D24A1700E53537 /* CandidatesView.swift in Sources */,
+				02DB9849E580370B9789D2F9 /* CandidateUIManager.swift in Sources */,
+				602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */,
+				643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
