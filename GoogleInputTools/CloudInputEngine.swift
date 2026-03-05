@@ -25,6 +25,9 @@ class CloudInputEngine {
     let _inputTool = InputTool.Pinyin
     let _candidateNum = 11
 
+    private var currentTask: URLSessionDataTask?
+    private let taskLock = NSLock()
+
     func requestCandidates(
         _ text: String,
         complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
@@ -39,7 +42,19 @@ class CloudInputEngine {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
+        let startTime = CFAbsoluteTimeGetCurrent()
+
+        taskLock.lock()
+        currentTask?.cancel()
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error as NSError?, error.code == NSURLErrorCancelled {
+                NSLog("Request cancelled: \(text)")
+                return
+            }
+
+            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            NSLog("Request completed: \(text) in %.0fms", elapsed)
+
             guard let data = data else { return }
 
             /*
@@ -76,23 +91,10 @@ class CloudInputEngine {
                 complete(candidateArray, matchedLength)
             }
         }
+        currentTask = task
+        taskLock.unlock()
 
         task.resume()
     }
 
-    func requestCandidatesSync(_ text: String) -> ([String], [Int]?) {
-        let semaphore = DispatchSemaphore(value: 0)
-
-        var candidates: [String] = []
-        var matchedLength: [Int]? = []
-        requestCandidates(text) { result, length in
-            candidates = result
-            matchedLength = length
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-
-        return (candidates, matchedLength)
-    }
 }

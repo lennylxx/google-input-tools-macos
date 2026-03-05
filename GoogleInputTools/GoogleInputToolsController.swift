@@ -62,12 +62,14 @@ class GoogleInputToolsController: IMKInputController {
 
     func getAndRenderCandidates(_ compString: String) {
 
-        DispatchQueue.global().async {
-
-            let (candidates, matchedLength) = CloudInputEngine.shared.requestCandidatesSync(
-                compString)
-
+        CloudInputEngine.shared.requestCandidates(compString) { candidates, matchedLength in
             DispatchQueue.main.async {
+                // Discard stale results if compose string has changed
+                guard InputContext.shared.composeString == compString else {
+                    NSLog("Discarding stale results for: \(compString)")
+                    return
+                }
+
                 NSLog("main thread candidates: \(candidates)")
 
                 InputContext.shared.candidates = candidates
