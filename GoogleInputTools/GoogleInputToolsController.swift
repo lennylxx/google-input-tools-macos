@@ -327,6 +327,7 @@ class GoogleInputToolsController: IMKInputController {
                 client().setMarkedText("", selectionRange: range, replacementRange: range)
                 self.candidates.update()
                 self.candidates.hide()
+                CandidatesWindow.shared.hide()
                 return true
             }
 
