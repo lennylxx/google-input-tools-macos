@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum InputTool: String {
+enum InputTool: String, CaseIterable {
     case Pinyin = "zh-t-i0-pinyin"
     case Shuangpin_ABC = "zh-t-i0-pinyin-x0-shuangpin-abc"
     case Shuangpin_Microsoft = "zh-t-i0-pinyin-x0-shuangpin-ms"
@@ -16,13 +16,26 @@ enum InputTool: String {
     case Shuangpin_Ziguang = "zh-t-i0-pinyin-x0-shuangpin-ziguang"
     case Shuangpin_Ziranma = "zh-t-i0-pinyin-x0-shuangpin-ziranma"
     case Wubi = "zh-t-i0-wubi-1986"
+
+    var displayName: String {
+        switch self {
+        case .Pinyin: return "Pinyin"
+        case .Shuangpin_ABC: return "Shuangpin (ABC)"
+        case .Shuangpin_Microsoft: return "Shuangpin (Microsoft)"
+        case .Shuangpin_Xiaohe: return "Shuangpin (Xiaohe)"
+        case .Shuangpin_Jiajia: return "Shuangpin (Jiajia)"
+        case .Shuangpin_Ziguang: return "Shuangpin (Ziguang)"
+        case .Shuangpin_Ziranma: return "Shuangpin (Ziranma)"
+        case .Wubi: return "Wubi 86"
+        }
+    }
 }
 
 class CloudInputEngine {
 
     static let shared = CloudInputEngine()
 
-    let _inputTool = InputTool.Pinyin
+    var inputTool: InputTool { UISettings.inputTool }
     let _candidateNum = 11
 
     private var currentTask: URLSessionDataTask?
@@ -34,7 +47,7 @@ class CloudInputEngine {
     ) {
         let url = URL(
             string:
-                "https://inputtools.google.com/request?text=\(text)&itc=\(_inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
+                "https://inputtools.google.com/request?text=\(text)&itc=\(inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
         )!
 
         NSLog("%@", url.absoluteString)

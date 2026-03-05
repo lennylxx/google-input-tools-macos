@@ -24,7 +24,7 @@ class CandidatesView: NSView {
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let globalAttributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: UISettings.Font,
+            NSAttributedString.Key.font: UISettings.font,
             NSAttributedString.Key.foregroundColor: UISettings.TextColor,
         ]
 

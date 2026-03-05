@@ -36,7 +36,8 @@ class InputContext {
 
     // MARK: - Custom UI state
     var currentPage: Int = 0
-    let pageSize: Int = 9
+
+    var pageSize: Int { UISettings.pageSize }
 
     var totalPages: Int {
         return _candidates.isEmpty ? 0 : (_candidates.count - 1) / pageSize + 1

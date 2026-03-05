@@ -13,13 +13,16 @@ class GoogleInputToolsController: IMKInputController {
     // Prevent ARC from deallocating controllers while InputMethodKit still holds unretained references
     private static var retainedControllers = [GoogleInputToolsController]()
 
-    private let uiManager: CandidateUIManager
-    private let systemUIManager: SystemUICandidateManager?
+    private var uiManager: CandidateUIManager
+    private var systemUIManager: SystemUICandidateManager?
+    private var server: IMKServer
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
         NSLog("\(#function)(\(inputClient))")
 
-        if UISettings.SystemUI {
+        self.server = server
+
+        if UISettings.systemUI {
             let sysManager = SystemUICandidateManager(server: server)
             self.uiManager = sysManager
             self.systemUIManager = sysManager
@@ -31,6 +34,24 @@ class GoogleInputToolsController: IMKInputController {
         super.init(server: server, delegate: delegate, client: inputClient)
 
         Self.retainedControllers.append(self)
+
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(reloadUIManager),
+            name: NSNotification.Name("PreferencesSaved"), object: nil)
+    }
+
+    @objc private func reloadUIManager() {
+        NSLog("Reloading UI manager, systemUI=\(UISettings.systemUI)")
+        uiManager.reset()
+
+        if UISettings.systemUI {
+            let sysManager = SystemUICandidateManager(server: server)
+            uiManager = sysManager
+            systemUIManager = sysManager
+        } else {
+            uiManager = CustomUICandidateManager()
+            systemUIManager = nil
+        }
     }
 
     override func client() -> (IMKTextInput & NSObjectProtocol)! {
@@ -176,6 +197,21 @@ class GoogleInputToolsController: IMKInputController {
     override func recognizedEvents(_ sender: Any!) -> Int {
         let events: NSEvent.EventTypeMask = [.keyDown, .flagsChanged]
         return Int(events.rawValue)
+    }
+
+    override func menu() -> NSMenu! {
+        let menu = NSMenu()
+        let prefsItem = NSMenuItem(
+            title: "Preferences…",
+            action: #selector(showPreferences(_:)),
+            keyEquivalent: ",")
+        prefsItem.target = self
+        menu.addItem(prefsItem)
+        return menu
+    }
+
+    @objc override func showPreferences(_ sender: Any?) {
+        PreferencesWindow.shared.showWindow()
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {

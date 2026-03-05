@@ -77,7 +77,7 @@ class CandidatesWindow: NSWindow {
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: UISettings.Font
+            NSAttributedString.Key.font: UISettings.font
         ]
 
         textToPaint.addAttributes(attributes, range: NSMakeRange(0, text.count))

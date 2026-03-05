@@ -22,6 +22,7 @@
 		02DB9849E580370B9789D2F9 /* CandidateUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */; };
 		602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */; };
 		643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */; };
+		A1B2C3D4E5F6071829304150 /* PreferencesWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateUIManager.swift; sourceTree = "<group>"; };
 		602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemUICandidateManager.swift; sourceTree = "<group>"; };
 		643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomUICandidateManager.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +93,7 @@
 				02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */,
 				602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */,
 				643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */,
+				A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */,
 				4D07405226E007B5007FE390 /* InfoPlist.strings */,
 			);
 			path = GoogleInputTools;
@@ -187,6 +190,7 @@
 				02DB9849E580370B9789D2F9 /* CandidateUIManager.swift in Sources */,
 				602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */,
 				643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */,
+				A1B2C3D4E5F6071829304150 /* PreferencesWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
