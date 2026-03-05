@@ -12,8 +12,9 @@ class InputContext {
     var composeString: String = ""
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
+    var visiblePageStart: Int = 0
     var currentPage: Int = 0
-    let pageSize: Int = 9
+    let pageSize: Int = 5
     var isEnglishMode: Bool = false
 
     private var _candidates: [String] = []
@@ -54,12 +55,18 @@ class InputContext {
         }
     }
 
+    var numberedPageCandidates: [String] {
+        let page = currentPageCandidates
+        return page.enumerated().map { "\($0.offset + 1). \($0.element)" }
+    }
+
     var numberedCandidates: [String] {
         return _numberedCandidates
     }
 
     func clean() {
         currentIndex = 0
+        visiblePageStart = 0
         currentPage = 0
         matchedLength = []
         composeString = ""

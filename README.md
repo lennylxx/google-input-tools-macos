@@ -45,7 +45,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
 - [x] Basic custom UI
   - [x] Numbered candidates
   - [x] Highlight current selected candidate
-  - [ ] Arrow keys to switch between highlighted candidate
+  - [x] Arrow keys `←`/`→` to switch between highlighted candidate
   - [ ] Group candidates into multiple pages, each page with at most `10` candidates
   - [ ] Page up and page down button
   - [ ] Draggable candidate window
