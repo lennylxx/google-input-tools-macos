@@ -9,12 +9,10 @@ class InputContext {
 
     static let shared = InputContext()
 
+    // MARK: - Common state
     var composeString: String = ""
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
-    var visiblePageStart: Int = 0
-    var currentPage: Int = 0
-    let pageSize: Int = 5
     var isEnglishMode: Bool = false
 
     private var _candidates: [String] = []
@@ -32,6 +30,14 @@ class InputContext {
         }
     }
 
+    // MARK: - System UI state
+    // Tracks the first visible candidate index inferred from IMKCandidates callbacks
+    var visiblePageStart: Int = 0
+
+    // MARK: - Custom UI state
+    var currentPage: Int = 0
+    let pageSize: Int = 9
+
     var totalPages: Int {
         return _candidates.isEmpty ? 0 : (_candidates.count - 1) / pageSize + 1
     }
@@ -43,8 +49,26 @@ class InputContext {
         return Array(_candidates[start..<end])
     }
 
+    var currentPageIndex: Int {
+        return currentIndex - currentPage * pageSize
+    }
+
     func absoluteIndex(forPageIndex pageIndex: Int) -> Int {
         return currentPage * pageSize + pageIndex
+    }
+
+    var numberedPageCandidates: [String] {
+        let page = currentPageCandidates
+        return page.enumerated().map { "\($0.offset + 1). \($0.element)" }
+    }
+
+    var currentNumberedPageCandidate: String {
+        let page = numberedPageCandidates
+        let idx = currentPageIndex
+        if idx >= 0 && idx < page.count {
+            return page[idx]
+        }
+        return ""
     }
 
     var currentNumberedCandidate: String {
@@ -53,11 +77,6 @@ class InputContext {
         } else {
             return ""
         }
-    }
-
-    var numberedPageCandidates: [String] {
-        let page = currentPageCandidates
-        return page.enumerated().map { "\($0.offset + 1). \($0.element)" }
     }
 
     var numberedCandidates: [String] {

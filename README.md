@@ -47,8 +47,8 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
 - [x] Basic custom UI
   - [x] Numbered candidates
   - [x] Highlight current selected candidate
-  - [ ] Group candidates into multiple pages, each page with at most `10` candidates
-  - [ ] Page up and page down button
+  - [x] Group candidates into multiple pages, each page with at most `9` candidates
+  - [x] Page up and page down
   - [ ] Draggable candidate window
 - [ ] Advanced custom UI
   - [ ] Display tokenized input string and candidates

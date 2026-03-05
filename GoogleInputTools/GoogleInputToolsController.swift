@@ -247,14 +247,27 @@ class GoogleInputToolsController: IMKInputController {
             else if key.isNumber {
                 let keyValue = Int(key.hexDigitValue!)
                 let context = InputContext.shared
-                let index = context.visiblePageStart + keyValue - 1
 
-                NSLog("keyValue=\(keyValue), visiblePageStart=\(context.visiblePageStart), index=\(index)")
+                if UISettings.SystemUI {
+                    let index = context.visiblePageStart + keyValue - 1
 
-                if keyValue >= 1 && index < context.candidates.count {
-                    context.currentIndex = index
-                    commitCandidate(client: sender)
-                    return true
+                    NSLog("keyValue=\(keyValue), visiblePageStart=\(context.visiblePageStart), index=\(index)")
+
+                    if keyValue >= 1 && index < context.candidates.count {
+                        context.currentIndex = index
+                        commitCandidate(client: sender)
+                        return true
+                    }
+                } else {
+                    let pageCandidates = context.currentPageCandidates
+
+                    NSLog("keyValue=\(keyValue), page=\(context.currentPage), pageCount=\(pageCandidates.count)")
+
+                    if keyValue >= 1 && keyValue <= pageCandidates.count {
+                        context.currentIndex = context.absoluteIndex(forPageIndex: keyValue - 1)
+                        commitCandidate(client: sender)
+                        return true
+                    }
                 }
 
                 return false
@@ -267,19 +280,20 @@ class GoogleInputToolsController: IMKInputController {
                 if UISettings.SystemUI {
                     self.candidates.interpretKeyEvents([event])
                 } else {
-                    if event.keyCode == kVK_LeftArrow && InputContext.shared.currentIndex > 0 {
-                        InputContext.shared.currentIndex -= 1
+                    let context = InputContext.shared
+                    let pageStart = context.currentPage * context.pageSize
+                    let pageEnd = min(pageStart + context.pageSize, context.candidates.count) - 1
+
+                    if event.keyCode == kVK_LeftArrow && context.currentIndex > pageStart {
+                        context.currentIndex -= 1
                     }
 
-                    if event.keyCode == kVK_RightArrow
-                        && InputContext.shared.currentIndex < InputContext.shared.candidates.count
-                            - 1
-                    {
-                        InputContext.shared.currentIndex += 1
+                    if event.keyCode == kVK_RightArrow && context.currentIndex < pageEnd {
+                        context.currentIndex += 1
                     }
 
                     // keep the marked text unchanged
-                    let compString = InputContext.shared.composeString
+                    let compString = context.composeString
                     let range = NSMakeRange(NSNotFound, NSNotFound)
                     self.client().setMarkedText(
                         compString, selectionRange: range, replacementRange: range)
@@ -292,14 +306,32 @@ class GoogleInputToolsController: IMKInputController {
             else if (event.keyCode == kVK_ANSI_Equal || event.keyCode == kVK_DownArrow)
                 && InputContext.shared.candidates.count > 0
             {
-                self.candidates.pageDown(sender)
+                if UISettings.SystemUI {
+                    self.candidates.pageDown(sender)
+                } else {
+                    let context = InputContext.shared
+                    if context.currentPage < context.totalPages - 1 {
+                        context.currentPage += 1
+                        context.currentIndex = context.currentPage * context.pageSize
+                        CandidatesWindow.shared.update(sender: self.client())
+                    }
+                }
                 return true
             }
 
             else if (event.keyCode == kVK_ANSI_Minus || event.keyCode == kVK_UpArrow)
                 && InputContext.shared.candidates.count > 0
             {
-                self.candidates.pageUp(sender)
+                if UISettings.SystemUI {
+                    self.candidates.pageUp(sender)
+                } else {
+                    let context = InputContext.shared
+                    if context.currentPage > 0 {
+                        context.currentPage -= 1
+                        context.currentIndex = context.currentPage * context.pageSize
+                        CandidatesWindow.shared.update(sender: self.client())
+                    }
+                }
                 return true
             }
 

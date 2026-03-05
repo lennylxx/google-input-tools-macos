@@ -37,8 +37,10 @@ class CandidatesWindow: NSWindow {
     func update(sender: IMKTextInput) {
         let caretPosition = self.getCaretPosition(sender: sender)
 
-        let numberedCandidates = InputContext.shared.numberedCandidates
-        let text = numberedCandidates.joined(separator: " ")
+        let context = InputContext.shared
+        let pageCandidates = context.numberedPageCandidates
+        let pageInfo = context.totalPages > 1 ? " \(context.currentPage + 1)/\(context.totalPages)" : ""
+        let text = pageCandidates.joined(separator: " ") + pageInfo
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let attributes: [NSAttributedString.Key: Any] = [

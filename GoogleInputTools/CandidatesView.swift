@@ -17,8 +17,10 @@ class CandidatesView: NSView {
         UISettings.TextBackground.set()
         NSBezierPath.fill(bounds)
 
-        let numberedCandidates = InputContext.shared.numberedCandidates
-        let text = numberedCandidates.joined(separator: " ")
+        let context = InputContext.shared
+        let pageCandidates = context.numberedPageCandidates
+        let pageInfo = context.totalPages > 1 ? " \(context.currentPage + 1)/\(context.totalPages)" : ""
+        let text = pageCandidates.joined(separator: " ") + pageInfo
         let textToPaint: NSMutableAttributedString = NSMutableAttributedString.init(string: text)
 
         let globalAttributes: [NSAttributedString.Key: Any] = [
@@ -27,20 +29,22 @@ class CandidatesView: NSView {
         ]
 
         var start = 0
-        let currentIndex = InputContext.shared.currentIndex
-        if currentIndex > 0 {
-            start = numberedCandidates.prefix(currentIndex).joined(separator: " ").count + 1
+        let pageIndex = context.currentPageIndex
+        if pageIndex > 0 {
+            start = pageCandidates.prefix(pageIndex).joined(separator: " ").count + 1
         }
 
-        let selection = InputContext.shared.currentNumberedCandidate
+        let selection = context.currentNumberedPageCandidate
 
         let selectionAttributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.backgroundColor: UISettings.SelectionBackground
         ]
 
         textToPaint.addAttributes(globalAttributes, range: NSMakeRange(0, text.count))
-        textToPaint.addAttributes(
-            selectionAttributes, range: NSMakeRange(start, selection.count))
+        if selection.count > 0 {
+            textToPaint.addAttributes(
+                selectionAttributes, range: NSMakeRange(start, selection.count))
+        }
 
         // calculate text bounds with padding inside the view
         let textBounds = NSMakeRect(
