@@ -32,9 +32,10 @@ class CandidatesWindow: NSWindow {
             backing: backingStoreType, defer: flag)
 
         self.isOpaque = false
-        self.level = NSWindow.Level.floating
+        self.level = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
         self.backgroundColor = NSColor.clear
         self.isMovableByWindowBackground = true
+        self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         self._view = CandidatesView.init(frame: self.frame)
         self.contentView = _view
