@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4D07405326E007B5007FE390 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D07405226E007B5007FE390 /* InfoPlist.strings */; };
 		4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */; };
+		4D3B7ACF26D3F30C008C1A4B /* ProxySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B7ACE26D3F30C008C1A4B /* ProxySettings.swift */; };
 		4D73286C26D297BD00970795 /* CloudInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D73286B26D297BD00970795 /* CloudInputEngine.swift */; };
 		4DA371B42CF80E730055F12E /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DA371B32CF80E6F0055F12E /* Utilities.swift */; };
 		4DCA724E26D2331900E53537 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DCA724D26D2331900E53537 /* Assets.xcassets */; };
@@ -32,6 +33,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 /* Begin PBXFileReference section */
 		4D07405226E007B5007FE390 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 		4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISettings.swift; sourceTree = "<group>"; };
+		4D3B7ACE26D3F30C008C1A4B /* ProxySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxySettings.swift; sourceTree = "<group>"; };
 		4D73286B26D297BD00970795 /* CloudInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngine.swift; sourceTree = "<group>"; };
 		4DA371B32CF80E6F0055F12E /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		4DCA724626D2331700E53537 /* GoogleInputTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GoogleInputTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +121,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				4D73286B26D297BD00970795 /* CloudInputEngine.swift */,
 				4DA371B32CF80E6F0055F12E /* Utilities.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
+				4D3B7ACE26D3F30C008C1A4B /* ProxySettings.swift */,
 				02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */,
 				602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */,
 				643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */,
@@ -238,6 +241,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			buildActionMask = 2147483647;
 			files = (
 				4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */,
+				4D3B7ACF26D3F30C008C1A4B /* ProxySettings.swift in Sources */,
 				4DCA725F26D2368B00E53537 /* GoogleInputToolsController.swift in Sources */,
 				4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */,
 				4DCA725D26D233B700E53537 /* main.swift in Sources */,

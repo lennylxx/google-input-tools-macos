@@ -5,6 +5,7 @@
 //  Created by lennylxx on 3/5/26.
 //
 
+import Carbon
 import Cocoa
 
 class PreferencesWindow: NSWindow {
@@ -12,15 +13,19 @@ class PreferencesWindow: NSWindow {
     static let shared = PreferencesWindow()
 
     private let inputSchemePopup = NSPopUpButton()
+    private let proxyTypePopup = NSPopUpButton()
+    private let proxyHostField = NSTextField()
+    private let proxyPortField = NSTextField()
     private let uiModePopup = NSPopUpButton()
     private let fontSizePopup = NSPopUpButton()
     private let pageSizePopup = NSPopUpButton()
     private let paddingXPopup = NSPopUpButton()
     private let paddingYPopup = NSPopUpButton()
+    private var transformedToForeground = false
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 390),
+            contentRect: NSMakeRect(0, 0, 420, 620),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -37,6 +42,11 @@ class PreferencesWindow: NSWindow {
     override var canBecomeKey: Bool { return true }
     override var canBecomeMain: Bool { return true }
 
+    override func close() {
+        super.close()
+        restoreBackgroundApplication()
+    }
+
     private func setupUI() {
         let contentView = NSView(frame: self.contentRect(forFrameRect: self.frame))
         self.contentView = contentView
@@ -45,7 +55,7 @@ class PreferencesWindow: NSWindow {
         let labelWidth: CGFloat = 110
         let controlX = margin + labelWidth + 10
         let controlWidth: CGFloat = 220
-        var y: CGFloat = 330
+        var y = contentView.bounds.height - margin - 30
 
         // MARK: - General settings
 
@@ -65,6 +75,42 @@ class PreferencesWindow: NSWindow {
         contentView.addSubview(inputSchemePopup)
 
         y -= 35
+
+        // Proxy mode
+        let proxyTypeLabel = makeLabel("Proxy:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(proxyTypeLabel)
+
+        proxyTypePopup.frame = NSMakeRect(controlX, y, controlWidth, 24)
+        proxyTypePopup.removeAllItems()
+        proxyTypePopup.addItems(withTitles: ProxyType.allCases.map(\.displayName))
+        proxyTypePopup.target = self
+        proxyTypePopup.action = #selector(proxyTypeChanged)
+        contentView.addSubview(proxyTypePopup)
+
+        let proxyNote = makeNote("Used for candidate requests to inputtools.google.com.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
+        contentView.addSubview(proxyNote)
+
+        y -= 55
+
+        // Proxy host
+        let proxyHostLabel = makeLabel("Proxy Host:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(proxyHostLabel)
+
+        proxyHostField.frame = NSMakeRect(controlX, y, controlWidth, 24)
+        proxyHostField.placeholderString = "127.0.0.1"
+        contentView.addSubview(proxyHostField)
+
+        y -= 35
+
+        // Proxy port
+        let proxyPortLabel = makeLabel("Proxy Port:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(proxyPortLabel)
+
+        proxyPortField.frame = NSMakeRect(controlX, y, 100, 24)
+        proxyPortField.placeholderString = "7890"
+        contentView.addSubview(proxyPortField)
+
+        y -= 45
 
         // UI mode
         let uiLabel = makeLabel("UI Mode:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -145,6 +191,8 @@ class PreferencesWindow: NSWindow {
         saveButton.target = self
         saveButton.action = #selector(savePreferences)
         contentView.addSubview(saveButton)
+
+        updateProxyControls()
     }
 
     private func makeLabel(_ text: String, frame: NSRect) -> NSTextField {
@@ -180,9 +228,83 @@ class PreferencesWindow: NSWindow {
         return label
     }
 
+    @objc private func proxyTypeChanged() {
+        updateProxyControls()
+    }
+
+    private func updateProxyControls() {
+        let selectedType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
+        let isEnabled = selectedType != .none
+        proxyHostField.isEnabled = isEnabled
+        proxyPortField.isEnabled = isEnabled
+    }
+
+    private func presentValidationError(_ message: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Invalid Proxy Settings"
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: self) { _ in
+            self.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    private func promoteBackgroundApplication() {
+        guard !transformedToForeground else {
+            return
+        }
+
+        var processSerialNumber = ProcessSerialNumber(highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
+        let status = TransformProcessType(&processSerialNumber, ProcessApplicationTransformState(kProcessTransformToForegroundApplication))
+        if status == noErr {
+            transformedToForeground = true
+        } else {
+            NSLog("Failed to promote preferences window app activation: \(status)")
+        }
+    }
+
+    private func restoreBackgroundApplication() {
+        guard transformedToForeground else {
+            return
+        }
+
+        var processSerialNumber = ProcessSerialNumber(highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
+        let status = TransformProcessType(&processSerialNumber, ProcessApplicationTransformState(kProcessTransformToUIElementApplication))
+        if status == noErr {
+            transformedToForeground = false
+        } else {
+            NSLog("Failed to restore background app activation: \(status)")
+        }
+    }
+
     @objc private func savePreferences() {
         let toolIndex = inputSchemePopup.indexOfSelectedItem
         UISettings.inputTool = InputTool.allCases[toolIndex]
+
+        let selectedProxyType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
+        let proxyHost = proxyHostField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let proxyPortString = proxyPortField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if selectedProxyType != .none {
+            guard !proxyHost.isEmpty else {
+                presentValidationError("Enter a proxy host or disable the proxy.")
+                return
+            }
+
+            guard let proxyPort = Int(proxyPortString), (1...65535).contains(proxyPort) else {
+                presentValidationError("Enter a proxy port between 1 and 65535.")
+                return
+            }
+
+            ProxySettings.type = selectedProxyType
+            ProxySettings.host = proxyHost
+            ProxySettings.port = proxyPort
+        } else {
+            ProxySettings.type = .none
+            ProxySettings.host = ""
+            ProxySettings.port = 0
+        }
 
         UISettings.systemUI = uiModePopup.indexOfSelectedItem == 1
 
@@ -198,7 +320,7 @@ class PreferencesWindow: NSWindow {
         let paddingY = paddingYPopup.indexOfSelectedItem * 2
         UISettings.paddingY = CGFloat(paddingY)
 
-        NSLog("Preferences saved: inputTool=\(UISettings.inputTool), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize), paddingX=\(UISettings.paddingX), paddingY=\(UISettings.paddingY)")
+        NSLog("Preferences saved: inputTool=\(UISettings.inputTool), proxyType=\(ProxySettings.type.rawValue), proxyHost=\(ProxySettings.host), proxyPort=\(ProxySettings.port), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize), paddingX=\(UISettings.paddingX), paddingY=\(UISettings.paddingY)")
 
         NotificationCenter.default.post(name: NSNotification.Name("PreferencesSaved"), object: nil)
 
@@ -209,6 +331,10 @@ class PreferencesWindow: NSWindow {
         // Reload current values
         let currentToolIndex = InputTool.allCases.firstIndex(of: UISettings.inputTool) ?? 0
         inputSchemePopup.selectItem(at: currentToolIndex)
+        let currentProxyTypeIndex = ProxyType.allCases.firstIndex(of: ProxySettings.type) ?? 0
+        proxyTypePopup.selectItem(at: currentProxyTypeIndex)
+        proxyHostField.stringValue = ProxySettings.host
+        proxyPortField.stringValue = ProxySettings.port > 0 ? "\(ProxySettings.port)" : ""
         uiModePopup.selectItem(at: UISettings.systemUI ? 1 : 0)
 
         let fontIndex = (Int(UISettings.fontSize) - 10) / 2
@@ -223,8 +349,14 @@ class PreferencesWindow: NSWindow {
         let paddingYIndex = Int(UISettings.paddingY) / 2
         paddingYPopup.selectItem(at: max(0, min(paddingYIndex, paddingYPopup.numberOfItems - 1)))
 
+        updateProxyControls()
+        promoteBackgroundApplication()
         self.center()
+        self.orderFrontRegardless()
         self.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        if ProxySettings.type != .none {
+            self.makeFirstResponder(proxyHostField)
+        }
     }
 }

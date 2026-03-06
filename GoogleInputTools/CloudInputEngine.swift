@@ -41,6 +41,16 @@ class CloudInputEngine {
     private var currentTask: URLSessionDataTask?
     private let taskLock = NSLock()
 
+    private func makeSession() -> (session: URLSession, invalidateWhenDone: Bool) {
+        guard let proxyConfiguration = ProxySettings.configuration else {
+            return (.shared, false)
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.connectionProxyDictionary = proxyConfiguration.connectionProxyDictionary
+        return (URLSession(configuration: configuration), true)
+    }
+
     func requestCandidates(
         _ text: String,
         complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
@@ -56,10 +66,17 @@ class CloudInputEngine {
         request.httpMethod = "GET"
 
         let startTime = CFAbsoluteTimeGetCurrent()
+        let (session, invalidateWhenDone) = makeSession()
 
         taskLock.lock()
         currentTask?.cancel()
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        let task = session.dataTask(with: request) { data, response, error in
+            defer {
+                if invalidateWhenDone {
+                    session.finishTasksAndInvalidate()
+                }
+            }
+
             if let error = error as NSError?, error.code == NSURLErrorCancelled {
                 NSLog("Request cancelled: \(text)")
                 return

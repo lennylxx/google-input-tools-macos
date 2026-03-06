@@ -2,7 +2,7 @@
 //  Utilities.swift
 //  GoogleInputTools
 //
-//  Created by lennylxx on 2024/11/27.
+//  Created by lennylxx on 11/27/24.
 //
 
 import AppKit
