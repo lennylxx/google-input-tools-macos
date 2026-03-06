@@ -91,6 +91,19 @@ class CandidateCache {
         return nil
     }
 
+    /// Find the longest cached prefix of the given pinyin for offline fallback.
+    func lookupLongestPrefix(_ pinyin: String) -> CachedResult? {
+        var prefix = pinyin
+        while prefix.count > 1 {
+            prefix = String(prefix.dropLast())
+            if let result = lookup(prefix) {
+                NSLog("Offline fallback: using cached prefix '\(prefix)' for '\(pinyin)'")
+                return result
+            }
+        }
+        return nil
+    }
+
     func store(_ pinyin: String, candidates: [String], metadata: [String: Any]?) {
         let result = CachedResult(candidates: candidates, metadata: metadata)
 

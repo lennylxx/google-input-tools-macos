@@ -59,6 +59,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Cancel previous unnecessary web requests on new keystroke to speed up
   - [x] In-memory LRU cache with SQLite persistence for candidate results
   - [x] Frequency-based smart re-ranking of candidates (configurable)
+  - [x] Offline fallback: serve cached candidates when network is unavailable
 - [x] Preferences menu (Input scheme, UI mode, font size, page size, smart rerank)
 - [x] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
 - [ ] Fullwidth form of punctuation in Chinese mode

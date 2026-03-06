@@ -132,10 +132,23 @@ class CloudInputEngine {
                 return
             }
 
+            if error != nil {
+                NSLog("Request failed: \(text) — \(error!.localizedDescription)")
+                if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
+                    complete(cached.candidates, cached.matchedLength)
+                }
+                return
+            }
+
             let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
             NSLog("Request completed: \(text) in %.0fms", elapsed)
 
-            guard let data = data else { return }
+            guard let data = data else {
+                if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
+                    complete(cached.candidates, cached.matchedLength)
+                }
+                return
+            }
 
             /*
             [
