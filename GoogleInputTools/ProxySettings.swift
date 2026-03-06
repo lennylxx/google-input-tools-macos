@@ -26,6 +26,12 @@ struct ProxyConfiguration: Equatable {
     let type: ProxyType
     let host: String
     let port: Int
+    let username: String
+    let password: String
+
+    var hasCredentials: Bool {
+        return !username.isEmpty
+    }
 
     var connectionProxyDictionary: [AnyHashable: Any] {
         switch type {
@@ -41,11 +47,16 @@ struct ProxyConfiguration: Equatable {
                 kCFNetworkProxiesHTTPSPort as String: port,
             ]
         case .socks:
-            return [
+            var dict: [AnyHashable: Any] = [
                 kCFNetworkProxiesSOCKSEnable as String: 1,
                 kCFNetworkProxiesSOCKSProxy as String: host,
                 kCFNetworkProxiesSOCKSPort as String: port,
             ]
+            if hasCredentials {
+                dict[kCFStreamPropertySOCKSUser as String] = username
+                dict[kCFStreamPropertySOCKSPassword as String] = password
+            }
+            return dict
         }
     }
 }
@@ -57,7 +68,8 @@ enum ProxySettings {
     static var type: ProxyType {
         get {
             if let raw = defaults.string(forKey: "proxyType"),
-               let type = ProxyType(rawValue: raw) {
+                let type = ProxyType(rawValue: raw)
+            {
                 return type
             }
             return .none
@@ -75,6 +87,16 @@ enum ProxySettings {
         set { defaults.set(newValue, forKey: "proxyPort") }
     }
 
+    static var username: String {
+        get { defaults.string(forKey: "proxyUsername") ?? "" }
+        set { defaults.set(newValue, forKey: "proxyUsername") }
+    }
+
+    static var password: String {
+        get { defaults.string(forKey: "proxyPassword") ?? "" }
+        set { defaults.set(newValue, forKey: "proxyPassword") }
+    }
+
     static var configuration: ProxyConfiguration? {
         let currentType = type
         guard currentType != .none else {
@@ -84,10 +106,14 @@ enum ProxySettings {
         let currentHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
         let currentPort = port
         guard !currentHost.isEmpty, (1...65535).contains(currentPort) else {
-            NSLog("Ignoring invalid proxy configuration: type=\(currentType.rawValue), host=\(currentHost), port=\(currentPort)")
+            NSLog(
+                "Ignoring invalid proxy configuration: type=\(currentType.rawValue), host=\(currentHost), port=\(currentPort)"
+            )
             return nil
         }
 
-        return ProxyConfiguration(type: currentType, host: currentHost, port: currentPort)
+        return ProxyConfiguration(
+            type: currentType, host: currentHost, port: currentPort,
+            username: username, password: password)
     }
 }

@@ -41,6 +41,30 @@ class CloudInputEngine {
     private var currentTask: URLSessionDataTask?
     private let taskLock = NSLock()
 
+    private class ProxyAuthDelegate: NSObject, URLSessionTaskDelegate {
+        let credential: URLCredential
+
+        init(username: String, password: String) {
+            self.credential = URLCredential(
+                user: username, password: password, persistence: .none)
+        }
+
+        func urlSession(
+            _ session: URLSession, task: URLSessionTask,
+            didReceive challenge: URLAuthenticationChallenge,
+            completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?)
+                -> Void
+        ) {
+            if challenge.protectionSpace.proxyType != nil
+                && challenge.previousFailureCount == 0
+            {
+                completionHandler(.useCredential, credential)
+            } else {
+                completionHandler(.performDefaultHandling, nil)
+            }
+        }
+    }
+
     private func makeSession() -> (session: URLSession, invalidateWhenDone: Bool) {
         guard let proxyConfiguration = ProxySettings.configuration else {
             return (.shared, false)
@@ -48,6 +72,18 @@ class CloudInputEngine {
 
         let configuration = URLSessionConfiguration.ephemeral
         configuration.connectionProxyDictionary = proxyConfiguration.connectionProxyDictionary
+
+        if proxyConfiguration.hasCredentials {
+            let delegate = ProxyAuthDelegate(
+                username: proxyConfiguration.username,
+                password: proxyConfiguration.password)
+            return (
+                URLSession(
+                    configuration: configuration, delegate: delegate, delegateQueue: nil),
+                true
+            )
+        }
+
         return (URLSession(configuration: configuration), true)
     }
 
@@ -118,12 +154,12 @@ class CloudInputEngine {
 
     static func parseResponse(_ json: Any?) -> ([String], [Int]?)? {
         guard let response = json as? [Any],
-              let status = response[0] as? String,
-              status == "SUCCESS",
-              let resultArray = response[1] as? [Any],
-              let candidateObject = resultArray.first as? [Any],
-              let candidateArray = candidateObject[1] as? [String],
-              let candidateMeta = candidateObject[3] as? [String: Any]
+            let status = response[0] as? String,
+            status == "SUCCESS",
+            let resultArray = response[1] as? [Any],
+            let candidateObject = resultArray.first as? [Any],
+            let candidateArray = candidateObject[1] as? [String],
+            let candidateMeta = candidateObject[3] as? [String: Any]
         else {
             return nil
         }

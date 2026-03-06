@@ -16,6 +16,8 @@ class PreferencesWindow: NSWindow {
     private let proxyTypePopup = NSPopUpButton()
     private let proxyHostField = NSTextField()
     private let proxyPortField = NSTextField()
+    private let proxyUsernameField = NSTextField()
+    private let proxyPasswordField = NSSecureTextField()
     private let uiModePopup = NSPopUpButton()
     private let fontSizePopup = NSPopUpButton()
     private let pageSizePopup = NSPopUpButton()
@@ -25,7 +27,7 @@ class PreferencesWindow: NSWindow {
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 620),
+            contentRect: NSMakeRect(0, 0, 420, 690),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -87,7 +89,9 @@ class PreferencesWindow: NSWindow {
         proxyTypePopup.action = #selector(proxyTypeChanged)
         contentView.addSubview(proxyTypePopup)
 
-        let proxyNote = makeNote("Used for candidate web requests.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
+        let proxyNote = makeNote(
+            "Used for candidate web requests.",
+            frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
         contentView.addSubview(proxyNote)
 
         y -= 55
@@ -110,6 +114,28 @@ class PreferencesWindow: NSWindow {
         proxyPortField.placeholderString = "7890"
         contentView.addSubview(proxyPortField)
 
+        y -= 35
+
+        // Proxy username
+        let proxyUsernameLabel = makeLabel(
+            "Username:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(proxyUsernameLabel)
+
+        proxyUsernameField.frame = NSMakeRect(controlX, y, controlWidth, 24)
+        proxyUsernameField.placeholderString = "Optional"
+        contentView.addSubview(proxyUsernameField)
+
+        y -= 35
+
+        // Proxy password
+        let proxyPasswordLabel = makeLabel(
+            "Password:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(proxyPasswordLabel)
+
+        proxyPasswordField.frame = NSMakeRect(controlX, y, controlWidth, 24)
+        proxyPasswordField.placeholderString = "Optional"
+        contentView.addSubview(proxyPasswordField)
+
         y -= 45
 
         // UI mode
@@ -121,7 +147,9 @@ class PreferencesWindow: NSWindow {
         uiModePopup.addItems(withTitles: ["Custom UI", "System UI"])
         contentView.addSubview(uiModePopup)
 
-        let uiNote = makeNote("Takes effect immediately for all settings.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
+        let uiNote = makeNote(
+            "Takes effect immediately for all settings.",
+            frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
         contentView.addSubview(uiNote)
 
         y -= 55
@@ -237,6 +265,8 @@ class PreferencesWindow: NSWindow {
         let isEnabled = selectedType != .none
         proxyHostField.isEnabled = isEnabled
         proxyPortField.isEnabled = isEnabled
+        proxyUsernameField.isEnabled = isEnabled
+        proxyPasswordField.isEnabled = isEnabled
     }
 
     private func presentValidationError(_ message: String) {
@@ -255,8 +285,11 @@ class PreferencesWindow: NSWindow {
             return
         }
 
-        var processSerialNumber = ProcessSerialNumber(highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
-        let status = TransformProcessType(&processSerialNumber, ProcessApplicationTransformState(kProcessTransformToForegroundApplication))
+        var processSerialNumber = ProcessSerialNumber(
+            highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
+        let status = TransformProcessType(
+            &processSerialNumber,
+            ProcessApplicationTransformState(kProcessTransformToForegroundApplication))
         if status == noErr {
             transformedToForeground = true
         } else {
@@ -269,8 +302,11 @@ class PreferencesWindow: NSWindow {
             return
         }
 
-        var processSerialNumber = ProcessSerialNumber(highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
-        let status = TransformProcessType(&processSerialNumber, ProcessApplicationTransformState(kProcessTransformToUIElementApplication))
+        var processSerialNumber = ProcessSerialNumber(
+            highLongOfPSN: 0, lowLongOfPSN: UInt32(kCurrentProcess))
+        let status = TransformProcessType(
+            &processSerialNumber,
+            ProcessApplicationTransformState(kProcessTransformToUIElementApplication))
         if status == noErr {
             transformedToForeground = false
         } else {
@@ -284,7 +320,8 @@ class PreferencesWindow: NSWindow {
 
         let selectedProxyType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
         let proxyHost = proxyHostField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        let proxyPortString = proxyPortField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let proxyPortString = proxyPortField.stringValue.trimmingCharacters(
+            in: .whitespacesAndNewlines)
 
         if selectedProxyType != .none {
             guard !proxyHost.isEmpty else {
@@ -300,10 +337,15 @@ class PreferencesWindow: NSWindow {
             ProxySettings.type = selectedProxyType
             ProxySettings.host = proxyHost
             ProxySettings.port = proxyPort
+            ProxySettings.username = proxyUsernameField.stringValue.trimmingCharacters(
+                in: .whitespacesAndNewlines)
+            ProxySettings.password = proxyPasswordField.stringValue
         } else {
             ProxySettings.type = .none
             ProxySettings.host = ""
             ProxySettings.port = 0
+            ProxySettings.username = ""
+            ProxySettings.password = ""
         }
 
         UISettings.systemUI = uiModePopup.indexOfSelectedItem == 1
@@ -320,7 +362,9 @@ class PreferencesWindow: NSWindow {
         let paddingY = paddingYPopup.indexOfSelectedItem * 2
         UISettings.paddingY = CGFloat(paddingY)
 
-        NSLog("Preferences saved: inputTool=\(UISettings.inputTool), proxyType=\(ProxySettings.type.rawValue), proxyHost=\(ProxySettings.host), proxyPort=\(ProxySettings.port), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize), paddingX=\(UISettings.paddingX), paddingY=\(UISettings.paddingY)")
+        NSLog(
+            "Preferences saved: inputTool=\(UISettings.inputTool), proxyType=\(ProxySettings.type.rawValue), proxyHost=\(ProxySettings.host), proxyPort=\(ProxySettings.port), proxyUsername=\(ProxySettings.username), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize), paddingX=\(UISettings.paddingX), paddingY=\(UISettings.paddingY)"
+        )
 
         NotificationCenter.default.post(name: NSNotification.Name("PreferencesSaved"), object: nil)
 
@@ -335,6 +379,8 @@ class PreferencesWindow: NSWindow {
         proxyTypePopup.selectItem(at: currentProxyTypeIndex)
         proxyHostField.stringValue = ProxySettings.host
         proxyPortField.stringValue = ProxySettings.port > 0 ? "\(ProxySettings.port)" : ""
+        proxyUsernameField.stringValue = ProxySettings.username
+        proxyPasswordField.stringValue = ProxySettings.password
         uiModePopup.selectItem(at: UISettings.systemUI ? 1 : 0)
 
         let fontIndex = (Int(UISettings.fontSize) - 10) / 2
