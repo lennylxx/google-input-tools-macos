@@ -14,16 +14,15 @@ class CandidatesView: NSView {
     private func buildDisplayText() -> NSMutableAttributedString {
         let context = InputContext.shared
         let pageCandidates = context.numberedPageCandidates
-        let pageInfo = context.pageIndicator
-        let text = pageCandidates.joined(separator: " ") + pageInfo
-        let textToPaint = NSMutableAttributedString(string: text)
+        let candidateText = pageCandidates.joined(separator: " ")
+        let textToPaint = NSMutableAttributedString(string: candidateText)
 
         let globalAttributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.font: UISettings.font,
             NSAttributedString.Key.foregroundColor: UISettings.TextColor,
         ]
 
-        textToPaint.addAttributes(globalAttributes, range: NSMakeRange(0, text.count))
+        textToPaint.addAttributes(globalAttributes, range: NSMakeRange(0, candidateText.count))
 
         // Highlight only the candidate text (not the "N. " prefix)
         var start = 0
@@ -41,6 +40,23 @@ class CandidatesView: NSView {
             ]
             textToPaint.addAttributes(
                 selectionAttributes, range: NSMakeRange(start + prefix.count, selection.count - prefix.count))
+        }
+
+        // Append trailing indicators (page arrows, network icon) at a fixed small size
+        let indicatorFont = NSFont.systemFont(ofSize: 10)
+        let indicatorAttributes: [NSAttributedString.Key: Any] = [
+            .font: indicatorFont,
+            .foregroundColor: NSColor.gray,
+        ]
+
+        var suffix = context.pageIndicator
+        if let sourceIndicator = context.candidateSource.indicator {
+            suffix += " " + sourceIndicator
+        }
+
+        if !suffix.isEmpty {
+            let indicatorStr = NSAttributedString(string: suffix, attributes: indicatorAttributes)
+            textToPaint.append(indicatorStr)
         }
 
         return textToPaint

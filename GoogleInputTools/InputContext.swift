@@ -7,6 +7,18 @@
 
 import Foundation
 
+enum CandidateSource {
+    case cache
+    case network
+
+    var indicator: String? {
+        switch self {
+        case .cache: return nil
+        case .network: return "☁️"
+        }
+    }
+}
+
 class InputContext {
 
     static let shared = InputContext()
@@ -16,6 +28,7 @@ class InputContext {
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
     var isEnglishMode: Bool = false
+    var candidateSource: CandidateSource = .cache
 
     private var _candidates: [String] = []
     private var _numberedCandidates: [String] = []
@@ -107,6 +120,7 @@ class InputContext {
         currentPage = 0
         matchedLength = []
         composeString = ""
+        candidateSource = .cache
         _candidates = []
         _numberedCandidates = []
     }

@@ -84,7 +84,7 @@ class GoogleInputToolsController: IMKInputController {
 
     func getAndRenderCandidates(_ compString: String) {
 
-        CloudInputEngine.shared.requestCandidates(compString) { candidates, matchedLength in
+        CloudInputEngine.shared.requestCandidates(compString) { candidates, matchedLength, source in
             DispatchQueue.main.async {
                 // Discard stale results if compose string has changed
                 guard InputContext.shared.composeString == compString else {
@@ -96,6 +96,7 @@ class GoogleInputToolsController: IMKInputController {
 
                 InputContext.shared.candidates = candidates
                 InputContext.shared.matchedLength = matchedLength
+                InputContext.shared.candidateSource = source
 
                 self.uiManager.updateCandidates(client: self.client())
                 self.uiManager.show()

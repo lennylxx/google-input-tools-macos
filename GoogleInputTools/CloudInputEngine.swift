@@ -121,7 +121,7 @@ class CloudInputEngine {
 
     func requestCandidates(
         _ text: String,
-        complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
+        complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?, _ source: CandidateSource) -> Void
     ) {
         // Check cache first
         if let cached = CandidateCache.shared.lookup(text) {
@@ -130,9 +130,9 @@ class CloudInputEngine {
                 let (reranked, rerankedML) = CandidateCache.shared.rerank(
                     pinyin: text, candidates: cached.candidates,
                     matchedLength: cached.matchedLength)
-                complete(reranked, rerankedML)
+                complete(reranked, rerankedML, .cache)
             } else {
-                complete(cached.candidates, cached.matchedLength)
+                complete(cached.candidates, cached.matchedLength, .cache)
             }
             prefetch(text)
             return
@@ -162,7 +162,7 @@ class CloudInputEngine {
             if error != nil {
                 NSLog("Request failed: \(text) — \(error!.localizedDescription)")
                 if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
-                    complete(cached.candidates, cached.matchedLength)
+                    complete(cached.candidates, cached.matchedLength, .cache)
                 }
                 return
             }
@@ -172,7 +172,7 @@ class CloudInputEngine {
 
             guard let data = data else {
                 if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
-                    complete(cached.candidates, cached.matchedLength)
+                    complete(cached.candidates, cached.matchedLength, .cache)
                 }
                 return
             }
@@ -183,7 +183,7 @@ class CloudInputEngine {
                 CandidateCache.shared.store(
                     text, candidates: candidateArray, metadata: metadata)
                 let matchedLength = metadata?["matched_length"] as? [Int]
-                complete(candidateArray, matchedLength)
+                complete(candidateArray, matchedLength, .network)
                 self.prefetch(text)
             }
         }
