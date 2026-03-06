@@ -87,7 +87,7 @@ class PreferencesWindow: NSWindow {
         proxyTypePopup.action = #selector(proxyTypeChanged)
         contentView.addSubview(proxyTypePopup)
 
-        let proxyNote = makeNote("Used for candidate requests to inputtools.google.com.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
+        let proxyNote = makeNote("Used for candidate web requests.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
         contentView.addSubview(proxyNote)
 
         y -= 55

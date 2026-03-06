@@ -196,7 +196,7 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func recognizedEvents(_ sender: Any!) -> Int {
-        let events: NSEvent.EventTypeMask = [.keyDown, .flagsChanged]
+        let events: NSEvent.EventTypeMask = [.keyDown, .keyUp, .flagsChanged]
         return Int(events.rawValue)
     }
 
@@ -215,6 +215,16 @@ class GoogleInputToolsController: IMKInputController {
         PreferencesWindow.shared.showWindow()
     }
 
+    private func toggleEnglishMode(client sender: Any!) {
+        let context = InputContext.shared
+        context.isEnglishMode.toggle()
+        NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
+
+        if context.isEnglishMode && context.composeString.count > 0 {
+            commitComposedString(client: sender)
+        }
+    }
+
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
         NSLog("%@", event)
 
@@ -222,21 +232,26 @@ class GoogleInputToolsController: IMKInputController {
         if event.type == .flagsChanged {
             let result = shiftTracker.handleFlagsChanged(keyCode: event.keyCode, modifierFlags: event.modifierFlags)
             if result == .shouldToggle {
-                let context = InputContext.shared
-                context.isEnglishMode = !context.isEnglishMode
-                NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
-
-                if context.isEnglishMode && context.composeString.count > 0 {
-                    commitComposedString(client: sender)
-                }
+                toggleEnglishMode(client: sender)
                 return true
             }
             return false
         }
 
-        // Track Shift usage for bare-Shift detection
+        // Track Shift usage for bare-Shift detection, including clients that emit keyUp/keyDown
+        if event.type == .keyUp {
+            if shiftTracker.handleKeyUp(keyCode: event.keyCode) == .shouldToggle {
+                toggleEnglishMode(client: sender)
+                return true
+            }
+            return false
+        }
+
         if event.type == .keyDown {
-            shiftTracker.handleKeyDown(modifierFlags: event.modifierFlags)
+            shiftTracker.handleKeyDown(keyCode: event.keyCode, modifierFlags: event.modifierFlags)
+            if event.keyCode == kVK_Shift || event.keyCode == kVK_RightShift {
+                return false
+            }
         }
 
         // In English mode, pass all keys through

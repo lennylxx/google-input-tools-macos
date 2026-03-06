@@ -38,7 +38,7 @@ class ShiftToggleTrackerTests: XCTestCase {
         _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
 
         // Key pressed while Shift held
-        tracker.handleKeyDown(modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: .shift)
 
         // Shift up — should NOT toggle
         let up = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: [])
@@ -49,8 +49,8 @@ class ShiftToggleTrackerTests: XCTestCase {
         _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
 
         // Multiple keys pressed
-        tracker.handleKeyDown(modifierFlags: .shift)
-        tracker.handleKeyDown(modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_S), modifierFlags: .shift)
 
         let up = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: [])
         XCTAssertEqual(up, .none)
@@ -75,7 +75,7 @@ class ShiftToggleTrackerTests: XCTestCase {
     func testStateResetsAfterShiftWithKey() {
         // Shift + key (no toggle)
         _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
-        tracker.handleKeyDown(modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: .shift)
         let up1 = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: [])
         XCTAssertEqual(up1, .none)
 
@@ -104,9 +104,36 @@ class ShiftToggleTrackerTests: XCTestCase {
         _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
 
         // Key pressed without Shift modifier (shouldn't mark as used)
-        tracker.handleKeyDown(modifierFlags: [])
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: [])
 
         let up = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: [])
         XCTAssertEqual(up, .shouldToggle)
+    }
+
+    func testBareShiftKeyDownAndKeyUpToggles() {
+        tracker.handleKeyDown(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+
+        let result = tracker.handleKeyUp(keyCode: UInt16(kVK_Shift))
+
+        XCTAssertEqual(result, .shouldToggle)
+    }
+
+    func testShiftKeyDownWithOtherKeyAndKeyUpDoesNotToggle() {
+        tracker.handleKeyDown(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: .shift)
+
+        let result = tracker.handleKeyUp(keyCode: UInt16(kVK_Shift))
+
+        XCTAssertEqual(result, .none)
+    }
+
+    func testDuplicateReleaseEventsOnlyToggleOnce() {
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+
+        let firstRelease = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: [])
+        let secondRelease = tracker.handleKeyUp(keyCode: UInt16(kVK_Shift))
+
+        XCTAssertEqual(firstRelease, .shouldToggle)
+        XCTAssertEqual(secondRelease, .none)
     }
 }
