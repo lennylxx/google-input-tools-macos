@@ -13,12 +13,14 @@ class PreferencesWindow: NSWindow {
 
     private let inputSchemePopup = NSPopUpButton()
     private let uiModePopup = NSPopUpButton()
-    private let fontSizeField = NSTextField()
-    private let pageSizeField = NSTextField()
+    private let fontSizePopup = NSPopUpButton()
+    private let pageSizePopup = NSPopUpButton()
+    private let paddingXPopup = NSPopUpButton()
+    private let paddingYPopup = NSPopUpButton()
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 320),
+            contentRect: NSMakeRect(0, 0, 420, 390),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -43,7 +45,7 @@ class PreferencesWindow: NSWindow {
         let labelWidth: CGFloat = 110
         let controlX = margin + labelWidth + 10
         let controlWidth: CGFloat = 220
-        var y: CGFloat = 260
+        var y: CGFloat = 330
 
         // MARK: - General settings
 
@@ -88,12 +90,12 @@ class PreferencesWindow: NSWindow {
         let fontLabel = makeLabel("Font Size:", frame: NSMakeRect(margin, y, labelWidth, 24))
         contentView.addSubview(fontLabel)
 
-        fontSizeField.frame = NSMakeRect(controlX, y, 60, 24)
-        contentView.addSubview(fontSizeField)
-
-        let fontUnit = makeLabel("pt", frame: NSMakeRect(controlX + 65, y, 30, 24))
-        fontUnit.alignment = .left
-        contentView.addSubview(fontUnit)
+        fontSizePopup.frame = NSMakeRect(controlX, y, 80, 24)
+        fontSizePopup.removeAllItems()
+        for size in stride(from: 10, through: 48, by: 2) {
+            fontSizePopup.addItem(withTitle: "\(size) pt")
+        }
+        contentView.addSubview(fontSizePopup)
 
         y -= 35
 
@@ -101,12 +103,38 @@ class PreferencesWindow: NSWindow {
         let pageLabel = makeLabel("Page Size:", frame: NSMakeRect(margin, y, labelWidth, 24))
         contentView.addSubview(pageLabel)
 
-        pageSizeField.frame = NSMakeRect(controlX, y, 60, 24)
-        contentView.addSubview(pageSizeField)
+        pageSizePopup.frame = NSMakeRect(controlX, y, 80, 24)
+        pageSizePopup.removeAllItems()
+        for size in 3...9 {
+            pageSizePopup.addItem(withTitle: "\(size)")
+        }
+        contentView.addSubview(pageSizePopup)
 
-        let pageUnit = makeLabel("candidates", frame: NSMakeRect(controlX + 65, y, 80, 24))
-        pageUnit.alignment = .left
-        contentView.addSubview(pageUnit)
+        y -= 35
+
+        // Padding X
+        let paddingXLabel = makeLabel("Padding X:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(paddingXLabel)
+
+        paddingXPopup.frame = NSMakeRect(controlX, y, 80, 24)
+        paddingXPopup.removeAllItems()
+        for size in stride(from: 0, through: 20, by: 2) {
+            paddingXPopup.addItem(withTitle: "\(size) px")
+        }
+        contentView.addSubview(paddingXPopup)
+
+        y -= 35
+
+        // Padding Y
+        let paddingYLabel = makeLabel("Padding Y:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(paddingYLabel)
+
+        paddingYPopup.frame = NSMakeRect(controlX, y, 80, 24)
+        paddingYPopup.removeAllItems()
+        for size in stride(from: 0, through: 20, by: 2) {
+            paddingYPopup.addItem(withTitle: "\(size) px")
+        }
+        contentView.addSubview(paddingYPopup)
 
         y -= 50
 
@@ -158,15 +186,19 @@ class PreferencesWindow: NSWindow {
 
         UISettings.systemUI = uiModePopup.indexOfSelectedItem == 1
 
-        if let size = Int(fontSizeField.stringValue), size >= 10, size <= 48 {
-            UISettings.fontSize = CGFloat(size)
-        }
+        let fontSize = 10 + fontSizePopup.indexOfSelectedItem * 2
+        UISettings.fontSize = CGFloat(fontSize)
 
-        if let size = Int(pageSizeField.stringValue), size >= 3, size <= 20 {
-            UISettings.pageSize = size
-        }
+        let pageSize = 3 + pageSizePopup.indexOfSelectedItem
+        UISettings.pageSize = pageSize
 
-        NSLog("Preferences saved: inputTool=\(UISettings.inputTool), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize)")
+        let paddingX = paddingXPopup.indexOfSelectedItem * 2
+        UISettings.paddingX = CGFloat(paddingX)
+
+        let paddingY = paddingYPopup.indexOfSelectedItem * 2
+        UISettings.paddingY = CGFloat(paddingY)
+
+        NSLog("Preferences saved: inputTool=\(UISettings.inputTool), systemUI=\(UISettings.systemUI), fontSize=\(UISettings.fontSize), pageSize=\(UISettings.pageSize), paddingX=\(UISettings.paddingX), paddingY=\(UISettings.paddingY)")
 
         NotificationCenter.default.post(name: NSNotification.Name("PreferencesSaved"), object: nil)
 
@@ -178,8 +210,18 @@ class PreferencesWindow: NSWindow {
         let currentToolIndex = InputTool.allCases.firstIndex(of: UISettings.inputTool) ?? 0
         inputSchemePopup.selectItem(at: currentToolIndex)
         uiModePopup.selectItem(at: UISettings.systemUI ? 1 : 0)
-        fontSizeField.stringValue = "\(Int(UISettings.fontSize))"
-        pageSizeField.stringValue = "\(UISettings.pageSize)"
+
+        let fontIndex = (Int(UISettings.fontSize) - 10) / 2
+        fontSizePopup.selectItem(at: max(0, min(fontIndex, fontSizePopup.numberOfItems - 1)))
+
+        let pageIndex = UISettings.pageSize - 3
+        pageSizePopup.selectItem(at: max(0, min(pageIndex, pageSizePopup.numberOfItems - 1)))
+
+        let paddingXIndex = Int(UISettings.paddingX) / 2
+        paddingXPopup.selectItem(at: max(0, min(paddingXIndex, paddingXPopup.numberOfItems - 1)))
+
+        let paddingYIndex = Int(UISettings.paddingY) / 2
+        paddingYPopup.selectItem(at: max(0, min(paddingYIndex, paddingYPopup.numberOfItems - 1)))
 
         self.center()
         self.makeKeyAndOrderFront(nil)

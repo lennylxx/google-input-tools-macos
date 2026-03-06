@@ -50,8 +50,8 @@ class CandidatesView: NSView {
         let textToPaint = buildDisplayText()
         if textToPaint.length == 0 { return .zero }
         return NSMakeSize(
-            textToPaint.size().width + UISettings.WindowPaddingX * 2,
-            textToPaint.size().height + UISettings.WindowPaddingY * 2)
+            textToPaint.size().width + UISettings.paddingX * 2,
+            textToPaint.size().height + UISettings.paddingY * 2)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -64,10 +64,10 @@ class CandidatesView: NSView {
         let textToPaint = buildDisplayText()
 
         let textBounds = NSMakeRect(
-            bounds.origin.x + UISettings.WindowPaddingX,
-            bounds.origin.y + UISettings.WindowPaddingY,
-            bounds.width - UISettings.WindowPaddingX * 2,
-            bounds.height - UISettings.WindowPaddingY * 2)
+            bounds.origin.x + UISettings.paddingX,
+            bounds.origin.y + UISettings.paddingY,
+            bounds.width - UISettings.paddingX * 2,
+            bounds.height - UISettings.paddingY * 2)
 
         textToPaint.draw(in: textBounds)
     }

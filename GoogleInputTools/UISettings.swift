@@ -45,6 +45,22 @@ class UISettings {
         set { defaults.set(newValue, forKey: "pageSize") }
     }
 
+    static var paddingX: CGFloat {
+        get {
+            let val = defaults.double(forKey: "paddingX")
+            return val > 0 ? CGFloat(val) : 6
+        }
+        set { defaults.set(Double(newValue), forKey: "paddingX") }
+    }
+
+    static var paddingY: CGFloat {
+        get {
+            let val = defaults.double(forKey: "paddingY")
+            return val > 0 ? CGFloat(val) : 8
+        }
+        set { defaults.set(Double(newValue), forKey: "paddingY") }
+    }
+
     // MARK: - Derived properties
 
     static var font: NSFont {
@@ -53,8 +69,6 @@ class UISettings {
 
     // MARK: - Custom UI visual constants
 
-    static let WindowPaddingX: CGFloat = 6
-    static let WindowPaddingY: CGFloat = 8
     static let TextColor = NSColor.white
     static let TextBackground = NSColor.black
     static let SelectionBackground = NSColor.systemBlue
