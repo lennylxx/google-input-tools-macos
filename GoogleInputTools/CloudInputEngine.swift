@@ -87,6 +87,38 @@ class CloudInputEngine {
         return (URLSession(configuration: configuration), true)
     }
 
+    // MARK: - Network fetch
+
+    private func makeRequest(_ text: String) -> URLRequest {
+        let url = URL(
+            string:
+                "https://inputtools.google.com/request?text=\(text)&itc=\(inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
+        )!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        return request
+    }
+
+    /// Fire-and-forget fetch that stores results in cache.
+    private func fetchAndCache(_ text: String) {
+        let request = makeRequest(text)
+        let (session, invalidateWhenDone) = makeSession()
+        let task = session.dataTask(with: request) { data, _, error in
+            defer {
+                if invalidateWhenDone {
+                    session.finishTasksAndInvalidate()
+                }
+            }
+            guard error == nil, let data = data else { return }
+            let json = try? JSONSerialization.jsonObject(with: data, options: [])
+            if let (candidates, metadata) = CloudInputEngine.parseResponse(json) {
+                CandidateCache.shared.store(text, candidates: candidates, metadata: metadata)
+                NSLog("Prefetched: \(text)")
+            }
+        }
+        task.resume()
+    }
+
     func requestCandidates(
         _ text: String,
         complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
@@ -102,18 +134,13 @@ class CloudInputEngine {
             } else {
                 complete(cached.candidates, cached.matchedLength)
             }
+            prefetch(text)
             return
         }
 
-        let url = URL(
-            string:
-                "https://inputtools.google.com/request?text=\(text)&itc=\(inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
-        )!
+        let request = makeRequest(text)
 
-        NSLog("%@", url.absoluteString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        NSLog("%@", request.url!.absoluteString)
 
         let startTime = CFAbsoluteTimeGetCurrent()
         let (session, invalidateWhenDone) = makeSession()
@@ -150,23 +177,6 @@ class CloudInputEngine {
                 return
             }
 
-            /*
-            [
-              "SUCCESS",
-              [[
-                "abc",
-                ["ABC","啊","阿","A","吖","腌","呵","阿布","嗄","啊不","锕"],
-                [],
-                {
-                    "annotation":["a b c","a","a","a","a","a","a","a bu","a","a bu","a"],
-                    "candidate_type":[0,0,0,0,0,0,0,0,0,0,0],
-                    "lc":["0 0 0","16","16","0","16","16","16","16 16","16","16 16","16"],
-                    "matched_length":[3,1,1,1,1,1,1,2,1,2,1]
-                }
-              ]]
-             ]
-            */
-
             let json = try? JSONSerialization.jsonObject(with: data, options: [])
 
             if let (candidateArray, metadata) = CloudInputEngine.parseResponse(json) {
@@ -174,6 +184,7 @@ class CloudInputEngine {
                     text, candidates: candidateArray, metadata: metadata)
                 let matchedLength = metadata?["matched_length"] as? [Int]
                 complete(candidateArray, matchedLength)
+                self.prefetch(text)
             }
         }
         currentTask = task
@@ -195,6 +206,18 @@ class CloudInputEngine {
         }
 
         return (candidateArray, candidateMeta)
+    }
+
+    // MARK: - Predictive prefetch
+
+    private func prefetch(_ pinyin: String) {
+        let predictions = CandidateCache.shared.predictNextInputs(prefix: pinyin)
+        guard !predictions.isEmpty else { return }
+        NSLog("Prefetching \(predictions.count) predictions for '\(pinyin)': \(predictions)")
+
+        for text in predictions {
+            fetchAndCache(text)
+        }
     }
 
 }

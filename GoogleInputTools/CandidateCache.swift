@@ -338,6 +338,33 @@ class CandidateCache {
 
     // MARK: - User frequency operations
 
+    /// Return the most common pinyin extensions of a prefix from past cache entries.
+    func predictNextInputs(prefix: String, limit: Int = 3) -> [String] {
+        guard let db = db else { return [] }
+
+        let sql =
+            "SELECT pinyin FROM cache WHERE pinyin LIKE ? AND pinyin != ? ORDER BY hit_count DESC LIMIT ?"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+
+        let pattern = prefix + "%"
+        sqlite3_bind_text(stmt, 1, (pattern as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 2, (prefix as NSString).utf8String, -1, nil)
+        sqlite3_bind_int(stmt, 3, Int32(limit))
+
+        var results = [String]()
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let ptr = sqlite3_column_text(stmt, 0) else { continue }
+            let pinyin = String(cString: ptr)
+            // Only prefetch if not already in memory cache
+            if memoryCache[pinyin] == nil {
+                results.append(pinyin)
+            }
+        }
+        return results
+    }
+
     private func incrementFrequency(pinyin: String, candidate: String) {
         guard let db = db else { return }
 
