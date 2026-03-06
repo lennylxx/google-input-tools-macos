@@ -41,9 +41,10 @@ class CloudInputEngineTests: XCTestCase {
         let result = CloudInputEngine.parseResponse(json)
         XCTAssertNotNil(result)
 
-        let (candidates, matchedLength) = result!
+        let (candidates, metadata) = result!
         XCTAssertEqual(candidates, ["你好", "你号", "尼好"])
-        XCTAssertEqual(matchedLength, [5, 5, 5])
+        XCTAssertEqual(metadata?["matched_length"] as? [Int], [5, 5, 5])
+        XCTAssertEqual(metadata?["annotation"] as? [String], ["ni hao", "ni hao", "ni hao"])
     }
 
     func testParsePartialMatchResponse() {
@@ -62,9 +63,9 @@ class CloudInputEngineTests: XCTestCase {
         let result = CloudInputEngine.parseResponse(json)
         XCTAssertNotNil(result)
 
-        let (candidates, matchedLength) = result!
+        let (candidates, metadata) = result!
         XCTAssertEqual(candidates.count, 4)
-        XCTAssertEqual(matchedLength, [3, 1, 1, 2])
+        XCTAssertEqual(metadata?["matched_length"] as? [Int], [3, 1, 1, 2])
     }
 
     func testParseNoMatchedLength() {
@@ -81,9 +82,9 @@ class CloudInputEngineTests: XCTestCase {
         let result = CloudInputEngine.parseResponse(json)
         XCTAssertNotNil(result)
 
-        let (candidates, matchedLength) = result!
+        let (candidates, metadata) = result!
         XCTAssertEqual(candidates, ["测试"])
-        XCTAssertNil(matchedLength)
+        XCTAssertNil(metadata?["matched_length"])
     }
 
     func testParseFailureResponse() {
@@ -128,7 +129,7 @@ class CloudInputEngineTests: XCTestCase {
     // MARK: - Proxy configuration
 
     func testHTTPProxyConnectionDictionary() {
-        let proxy = ProxyConfiguration(type: .http, host: "127.0.0.1", port: 8080)
+        let proxy = ProxyConfiguration(type: .http, host: "127.0.0.1", port: 8080, username: "", password: "")
         let dictionary = proxy.connectionProxyDictionary
 
         XCTAssertEqual(dictionary[kCFNetworkProxiesHTTPEnable as String] as? Int, 1)
@@ -140,7 +141,7 @@ class CloudInputEngineTests: XCTestCase {
     }
 
     func testSOCKSProxyConnectionDictionary() {
-        let proxy = ProxyConfiguration(type: .socks, host: "localhost", port: 1080)
+        let proxy = ProxyConfiguration(type: .socks, host: "localhost", port: 1080, username: "", password: "")
         let dictionary = proxy.connectionProxyDictionary
 
         XCTAssertEqual(dictionary[kCFNetworkProxiesSOCKSEnable as String] as? Int, 1)
@@ -163,7 +164,7 @@ class CloudInputEngineTests: XCTestCase {
 
         XCTAssertEqual(
             ProxySettings.configuration,
-            ProxyConfiguration(type: .http, host: "127.0.0.1", port: 8080))
+            ProxyConfiguration(type: .http, host: "127.0.0.1", port: 8080, username: "", password: ""))
     }
 
     func testProxyConfigurationRejectsInvalidHostOrPort() {

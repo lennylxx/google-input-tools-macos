@@ -91,6 +91,13 @@ class CloudInputEngine {
         _ text: String,
         complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?) -> Void
     ) {
+        // Check cache first
+        if let cached = CandidateCache.shared.lookup(text) {
+            NSLog("Cache hit: \(text)")
+            complete(cached.candidates, cached.matchedLength)
+            return
+        }
+
         let url = URL(
             string:
                 "https://inputtools.google.com/request?text=\(text)&itc=\(inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
@@ -142,7 +149,10 @@ class CloudInputEngine {
 
             let json = try? JSONSerialization.jsonObject(with: data, options: [])
 
-            if let (candidateArray, matchedLength) = CloudInputEngine.parseResponse(json) {
+            if let (candidateArray, metadata) = CloudInputEngine.parseResponse(json) {
+                CandidateCache.shared.store(
+                    text, candidates: candidateArray, metadata: metadata)
+                let matchedLength = metadata?["matched_length"] as? [Int]
                 complete(candidateArray, matchedLength)
             }
         }
@@ -152,7 +162,7 @@ class CloudInputEngine {
         task.resume()
     }
 
-    static func parseResponse(_ json: Any?) -> ([String], [Int]?)? {
+    static func parseResponse(_ json: Any?) -> ([String], [String: Any]?)? {
         guard let response = json as? [Any],
             let status = response[0] as? String,
             status == "SUCCESS",
@@ -164,10 +174,7 @@ class CloudInputEngine {
             return nil
         }
 
-        // let inputText = candidateObject[0] as! String
-        // let annotation = candidateMeta["annotation"] as! Array<String>
-        let matchedLength = candidateMeta["matched_length"] as? [Int]
-        return (candidateArray, matchedLength)
+        return (candidateArray, candidateMeta)
     }
 
 }
