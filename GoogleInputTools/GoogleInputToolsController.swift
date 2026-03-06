@@ -110,19 +110,25 @@ class GoogleInputToolsController: IMKInputController {
         let compString = InputContext.shared.composeString
         NSLog("compString=\(compString)")
 
-        // Use zero-width space as marked text to keep the compose session active
-        // without showing anything visible — compose string is shown in candidate window
         let range = NSMakeRange(NSNotFound, NSNotFound)
-        client().setMarkedText("\u{200B}", selectionRange: range, replacementRange: range)
 
         if compString.count > 0 {
+            if UISettings.systemUI {
+                // System UI: show compose string as marked text in the text field
+                client().setMarkedText(
+                    compString, selectionRange: range, replacementRange: range)
+            } else {
+                // Custom UI: use zero-width space to keep compose session active
+                // without showing anything visible — compose string is shown in candidate window
+                client().setMarkedText(
+                    "\u{200B}", selectionRange: range, replacementRange: range)
+            }
             // Refresh the window immediately to show the updated compose string,
             // even before the API response arrives (which may cancel prior requests)
             self.uiManager.updateCandidates(client: self.client())
             self.uiManager.show()
             self.getAndRenderCandidates(compString)
         } else {
-            // Clear the zero-width space when compose is empty
             client().setMarkedText("", selectionRange: range, replacementRange: range)
             uiManager.reset()
         }
