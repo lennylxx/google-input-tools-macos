@@ -110,21 +110,30 @@ class GoogleInputToolsController: IMKInputController {
         let compString = InputContext.shared.composeString
         NSLog("compString=\(compString)")
 
-        // set text at cursor
+        // Use zero-width space as marked text to keep the compose session active
+        // without showing anything visible — compose string is shown in candidate window
         let range = NSMakeRange(NSNotFound, NSNotFound)
-        client().setMarkedText(compString, selectionRange: range, replacementRange: range)
+        client().setMarkedText("\u{200B}", selectionRange: range, replacementRange: range)
 
         if compString.count > 0 {
+            // Refresh the window immediately to show the updated compose string,
+            // even before the API response arrives (which may cancel prior requests)
+            self.uiManager.updateCandidates(client: self.client())
+            self.uiManager.show()
             self.getAndRenderCandidates(compString)
         } else {
+            // Clear the zero-width space when compose is empty
+            client().setMarkedText("", selectionRange: range, replacementRange: range)
             uiManager.reset()
         }
     }
 
     func commitComposedString(client sender: Any!) {
         let compString = InputContext.shared.composeString
+        let range = NSMakeRange(NSNotFound, NSNotFound)
 
-        client().insertText(compString, replacementRange: NSMakeRange(NSNotFound, NSNotFound))
+        client().setMarkedText("", selectionRange: range, replacementRange: range)
+        client().insertText(compString, replacementRange: range)
 
         InputContext.shared.clean()
         uiManager.reset()
@@ -158,9 +167,9 @@ class GoogleInputToolsController: IMKInputController {
 
         NSLog("fromIndex=\(fromIndex.utf16Offset(in: compString)), remain=\(remain)")
 
-        client().insertText(candidate, replacementRange: NSMakeRange(0, clampedMatched))
         let range = NSMakeRange(NSNotFound, NSNotFound)
-        client().setMarkedText(remain, selectionRange: range, replacementRange: range)
+        client().setMarkedText("", selectionRange: range, replacementRange: range)
+        client().insertText(candidate, replacementRange: range)
 
         InputContext.shared.clean()
         InputContext.shared.composeString = String(remain)

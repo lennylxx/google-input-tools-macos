@@ -51,6 +51,8 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Page up and page down
   - [x] Draggable candidate window
 - [ ] Advanced custom UI
+  - [x] Compose string displayed in candidate window (orange, separate from candidates)
+  - [x] Padded highlight box on selected candidate with rounded corners
   - [ ] Display tokenized input string and candidates
   - [ ] Settings for font name, font size, color, etc.
   - [ ] Skin display

@@ -10,21 +10,39 @@ import SwiftUI
 
 class CandidatesView: NSView {
 
-    // Build the display text from current InputContext state
-    private func buildDisplayText() -> NSMutableAttributedString {
+    override var isFlipped: Bool { true }
+
+    private var selectionRange: NSRange = NSMakeRange(0, 0)
+    private static let selectionPadding: CGFloat = 3
+    private static let composeBottomMargin: CGFloat = 4
+
+    private func buildComposeText() -> NSAttributedString? {
+        let composeString = InputContext.shared.composeString
+        if composeString.isEmpty { return nil }
+        return NSAttributedString(
+            string: composeString,
+            attributes: [
+                .font: UISettings.font,
+                .foregroundColor: NSColor.systemOrange,
+            ])
+    }
+
+    private func buildCandidateText() -> NSMutableAttributedString {
         let context = InputContext.shared
+        let result = NSMutableAttributedString()
+
         let pageCandidates = context.numberedPageCandidates
         let candidateText = pageCandidates.joined(separator: " ")
-        let textToPaint = NSMutableAttributedString(string: candidateText)
 
-        let globalAttributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: UISettings.font,
-            NSAttributedString.Key.foregroundColor: UISettings.TextColor,
-        ]
+        result.append(
+            NSAttributedString(
+                string: candidateText,
+                attributes: [
+                    .font: UISettings.font,
+                    .foregroundColor: UISettings.TextColor,
+                ]))
 
-        textToPaint.addAttributes(globalAttributes, range: NSMakeRange(0, candidateText.count))
-
-        // Highlight only the candidate text (not the "N. " prefix)
+        // Track selection range within candidate text
         var start = 0
         let pageIndex = context.currentPageIndex
         if pageIndex > 0 {
@@ -32,42 +50,59 @@ class CandidatesView: NSView {
         }
 
         let selection = context.currentNumberedPageCandidate
-        let prefix = "\(pageIndex + 1). "
-
         if selection.count > 0 {
-            let selectionAttributes: [NSAttributedString.Key: Any] = [
-                NSAttributedString.Key.backgroundColor: UISettings.SelectionBackground
-            ]
-            textToPaint.addAttributes(
-                selectionAttributes, range: NSMakeRange(start + prefix.count, selection.count - prefix.count))
+            selectionRange = NSMakeRange(start, selection.count)
+        } else {
+            selectionRange = NSMakeRange(0, 0)
         }
 
-        // Append trailing indicators (page arrows, network icon) at a fixed small size
-        let indicatorFont = NSFont.systemFont(ofSize: 10)
-        let indicatorAttributes: [NSAttributedString.Key: Any] = [
-            .font: indicatorFont,
-            .foregroundColor: NSColor.gray,
-        ]
-
+        // Append trailing indicators
         var suffix = context.pageIndicator
         if let sourceIndicator = context.candidateSource.indicator {
             suffix += " " + sourceIndicator
         }
-
         if !suffix.isEmpty {
-            let indicatorStr = NSAttributedString(string: suffix, attributes: indicatorAttributes)
-            textToPaint.append(indicatorStr)
+            result.append(
+                NSAttributedString(
+                    string: suffix,
+                    attributes: [
+                        .font: NSFont.systemFont(ofSize: 10),
+                        .foregroundColor: NSColor.gray,
+                    ]))
         }
 
-        return textToPaint
+        return result
+    }
+
+    private func measureText(_ text: NSAttributedString) -> NSSize {
+        let rect = text.boundingRect(
+            with: NSSize(width: CGFloat(2000), height: CGFloat.greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading])
+        return NSMakeSize(ceil(rect.width), ceil(rect.height))
     }
 
     var preferredSize: NSSize {
-        let textToPaint = buildDisplayText()
-        if textToPaint.length == 0 { return .zero }
+        let pad = Self.selectionPadding
+        let px = UISettings.paddingX
+        let py = UISettings.paddingY
+
+        let composeText = buildComposeText()
+        let candidateText = buildCandidateText()
+        if candidateText.length == 0 { return .zero }
+
+        let candidateSize = measureText(candidateText)
+        var contentWidth = candidateSize.width
+        var contentHeight = pad + candidateSize.height + pad
+
+        if let ct = composeText {
+            let composeSize = measureText(ct)
+            contentWidth = max(contentWidth, composeSize.width)
+            contentHeight = composeSize.height + Self.composeBottomMargin + contentHeight
+        }
+
         return NSMakeSize(
-            textToPaint.size().width + UISettings.paddingX * 2,
-            textToPaint.size().height + UISettings.paddingY * 2)
+            contentWidth + (px + pad) * 2,
+            contentHeight + py * 2)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -77,14 +112,53 @@ class CandidatesView: NSView {
         UISettings.TextBackground.set()
         NSBezierPath.fill(bounds)
 
-        let textToPaint = buildDisplayText()
+        let pad = Self.selectionPadding
+        let px = UISettings.paddingX
+        let py = UISettings.paddingY
 
-        let textBounds = NSMakeRect(
-            bounds.origin.x + UISettings.paddingX,
-            bounds.origin.y + UISettings.paddingY,
-            bounds.width - UISettings.paddingX * 2,
-            bounds.height - UISettings.paddingY * 2)
+        let composeText = buildComposeText()
+        let candidateText = buildCandidateText()
+        if candidateText.length == 0 { return }
 
-        textToPaint.draw(in: textBounds)
+        var y = py
+
+        // Upper box: compose string
+        if let ct = composeText {
+            ct.draw(at: NSPoint(x: px + pad, y: y))
+            y += measureText(ct).height + Self.composeBottomMargin
+        }
+
+        // Lower box: candidates with selection highlight
+        let candidateOrigin = NSPoint(x: px + pad, y: y + pad)
+        let candidateSize = NSSize(
+            width: bounds.width - (px + pad) * 2,
+            height: bounds.height - y - pad - py)
+
+        let textStorage = NSTextStorage(attributedString: candidateText)
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: candidateSize)
+        textContainer.lineFragmentPadding = 0
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+        layoutManager.ensureLayout(for: textContainer)
+
+        if selectionRange.length > 0 {
+            let glyphRange = layoutManager.glyphRange(
+                forCharacterRange: selectionRange, actualCharacterRange: nil)
+            var selRect = layoutManager.boundingRect(
+                forGlyphRange: glyphRange, in: textContainer)
+
+            selRect.origin.x += candidateOrigin.x - pad
+            selRect.origin.y += candidateOrigin.y - pad
+            selRect.size.width += pad * 2
+            selRect.size.height += pad * 2
+
+            UISettings.SelectionBackground.setFill()
+            let path = NSBezierPath(roundedRect: selRect, xRadius: 3, yRadius: 3)
+            path.fill()
+        }
+
+        let fullGlyphRange = layoutManager.glyphRange(for: textContainer)
+        layoutManager.drawGlyphs(forGlyphRange: fullGlyphRange, at: candidateOrigin)
     }
 }
