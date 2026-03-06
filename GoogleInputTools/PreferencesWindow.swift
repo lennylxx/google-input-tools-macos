@@ -72,7 +72,7 @@ class PreferencesWindow: NSWindow {
 
         uiModePopup.frame = NSMakeRect(controlX, y, controlWidth, 24)
         uiModePopup.removeAllItems()
-        uiModePopup.addItems(withTitles: ["Custom UI", "System UI (IMKCandidates)"])
+        uiModePopup.addItems(withTitles: ["Custom UI", "System UI"])
         contentView.addSubview(uiModePopup)
 
         let uiNote = makeNote("Takes effect immediately for all settings.", frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
