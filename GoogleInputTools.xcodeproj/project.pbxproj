@@ -23,8 +23,10 @@
 		602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */; };
 		643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */; };
 		A1B2C3D4E5F6071829304150 /* PreferencesWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */; };
+		C1D2E3F4A5B6071829304160 /* ShiftToggleTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6071829304150 /* ShiftToggleTracker.swift */; };
 B1A2C3D4E5F60718293041B1 /* InputContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */; };
 B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */; };
+		C1D2E3F4A5B6071829304170 /* ShiftToggleTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,8 +49,10 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 		602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemUICandidateManager.swift; sourceTree = "<group>"; };
 		643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomUICandidateManager.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindow.swift; sourceTree = "<group>"; };
+		C1D2E3F4A5B6071829304150 /* ShiftToggleTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftToggleTracker.swift; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContextTests.swift; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudInputEngineTests.swift; sourceTree = "<group>"; };
+		C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftToggleTrackerTests.swift; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293041A1 /* GoogleInputToolsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GoogleInputToolsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -119,6 +123,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */,
 				643D6555C5D2FDDC94238C00 /* CustomUICandidateManager.swift */,
 				A1B2C3D4E5F6071829304140 /* PreferencesWindow.swift */,
+				C1D2E3F4A5B6071829304150 /* ShiftToggleTracker.swift */,
 				4D07405226E007B5007FE390 /* InfoPlist.strings */,
 			);
 			path = GoogleInputTools;
@@ -137,6 +142,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			children = (
 				B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */,
 				B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */,
+				C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */,
 			);
 			path = GoogleInputToolsTests;
 			sourceTree = "<group>";
@@ -243,6 +249,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				602F47FB93FF5FA30D594311 /* SystemUICandidateManager.swift in Sources */,
 				643D6555C5D2FDDC94238C09 /* CustomUICandidateManager.swift in Sources */,
 				A1B2C3D4E5F6071829304150 /* PreferencesWindow.swift in Sources */,
+				C1D2E3F4A5B6071829304160 /* ShiftToggleTracker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -254,6 +261,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			files = (
 				B1A2C3D4E5F60718293041B1 /* InputContextTests.swift in Sources */,
 				B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */,
+				C1D2E3F4A5B6071829304170 /* ShiftToggleTrackerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

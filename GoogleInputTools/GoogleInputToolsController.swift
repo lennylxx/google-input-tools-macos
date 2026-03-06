@@ -16,7 +16,7 @@ class GoogleInputToolsController: IMKInputController {
     private var uiManager: CandidateUIManager
     private var systemUIManager: SystemUICandidateManager?
     private var server: IMKServer
-    private var shiftKeyUsedWithOtherKey = false
+    private var shiftTracker = ShiftToggleTracker()
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
         NSLog("\(#function)(\(inputClient))")
@@ -219,32 +219,24 @@ class GoogleInputToolsController: IMKInputController {
         NSLog("%@", event)
 
         // Bare Shift key toggles Chinese/English mode (on key release, only if no other key was pressed)
-        if event.type == NSEvent.EventType.flagsChanged {
-            if (event.keyCode == kVK_Shift || event.keyCode == kVK_RightShift) {
-                if event.modifierFlags.contains(.shift) {
-                    // Shift pressed down — start tracking
-                    shiftKeyUsedWithOtherKey = false
-                    return false
-                } else {
-                    // Shift released — toggle only if no other key was pressed
-                    if !shiftKeyUsedWithOtherKey {
-                        let context = InputContext.shared
-                        context.isEnglishMode = !context.isEnglishMode
-                        NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
+        if event.type == .flagsChanged {
+            let result = shiftTracker.handleFlagsChanged(keyCode: event.keyCode, modifierFlags: event.modifierFlags)
+            if result == .shouldToggle {
+                let context = InputContext.shared
+                context.isEnglishMode = !context.isEnglishMode
+                NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
 
-                        if context.isEnglishMode && context.composeString.count > 0 {
-                            commitComposedString(client: sender)
-                        }
-                        return true
-                    }
-                    return false
+                if context.isEnglishMode && context.composeString.count > 0 {
+                    commitComposedString(client: sender)
                 }
+                return true
             }
+            return false
         }
 
-        // Any key pressed while Shift is held disqualifies bare-Shift toggle
-        if event.type == .keyDown && event.modifierFlags.contains(.shift) {
-            shiftKeyUsedWithOtherKey = true
+        // Track Shift usage for bare-Shift detection
+        if event.type == .keyDown {
+            shiftTracker.handleKeyDown(modifierFlags: event.modifierFlags)
         }
 
         // In English mode, pass all keys through
