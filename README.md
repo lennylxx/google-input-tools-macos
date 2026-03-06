@@ -30,6 +30,7 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
 
 ## Screenshot
 <img width="555" alt="screenshot" src="https://user-images.githubusercontent.com/5811576/131733470-c946efa3-0f80-4227-a4b1-9d047f51f47b.png">
+<img width="555" alt="screenshot2" src="https://github.com/user-attachments/assets/238ab1f2-8581-4232-bcf5-cd37fb3579d8">
 
 ## Progress
 
