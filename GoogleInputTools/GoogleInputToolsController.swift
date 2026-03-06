@@ -140,6 +140,10 @@ class GoogleInputToolsController: IMKInputController {
         NSLog("compString=\(compString), length=\(compString.count)")
         NSLog("currentIndex=\(index), currentCandidate=\(candidate), matchedLength=\(matched)")
 
+        // Record user selection for frequency-based re-ranking
+        let pinyin = String(compString.prefix(matched))
+        CandidateCache.shared.recordSelection(pinyin: pinyin, candidate: candidate)
+
         let fromIndex = compString.index(
             compString.endIndex, offsetBy: matched - compString.count)
         let remain = compString[fromIndex...]

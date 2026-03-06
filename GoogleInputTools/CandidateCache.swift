@@ -100,6 +100,28 @@ class CandidateCache {
         }
     }
 
+    /// Record that the user selected a candidate for the given pinyin.
+    func recordSelection(pinyin: String, candidate: String) {
+        dbQueue.async { [weak self] in
+            self?.incrementFrequency(pinyin: pinyin, candidate: candidate)
+        }
+    }
+
+    /// Re-rank candidates by boosting user-frequent selections to the top.
+    func rerank(pinyin: String, candidates: [String]) -> [String] {
+        let freqs = loadFrequencies(pinyin: pinyin)
+        guard !freqs.isEmpty else { return candidates }
+
+        return candidates.sorted { a, b in
+            let freqA = freqs[a] ?? 0
+            let freqB = freqs[b] ?? 0
+            if freqA != freqB {
+                return freqA > freqB
+            }
+            return false  // preserve original order for equal frequencies
+        }
+    }
+
     // MARK: - Memory management
 
     private func evictIfNeeded() {
@@ -139,6 +161,19 @@ class CandidateCache {
             """
         if sqlite3_exec(db, createSQL, nil, nil, nil) != SQLITE_OK {
             NSLog("Failed to create cache table: \(String(cString: sqlite3_errmsg(db)))")
+        }
+
+        let freqSQL = """
+            CREATE TABLE IF NOT EXISTS user_freq (
+                pinyin TEXT NOT NULL,
+                candidate TEXT NOT NULL,
+                count INTEGER DEFAULT 1,
+                last_used REAL DEFAULT (julianday('now')),
+                PRIMARY KEY (pinyin, candidate)
+            )
+            """
+        if sqlite3_exec(db, freqSQL, nil, nil, nil) != SQLITE_OK {
+            NSLog("Failed to create user_freq table: \(String(cString: sqlite3_errmsg(db)))")
         }
     }
 
@@ -254,6 +289,50 @@ class CandidateCache {
         }
 
         return CachedResult(candidates: candidates, metadata: metadata)
+    }
+
+    // MARK: - User frequency operations
+
+    private func incrementFrequency(pinyin: String, candidate: String) {
+        guard let db = db else { return }
+
+        let sql = """
+            INSERT INTO user_freq (pinyin, candidate, count, last_used)
+            VALUES (?, ?, 1, julianday('now'))
+            ON CONFLICT(pinyin, candidate) DO UPDATE SET
+                count = count + 1,
+                last_used = julianday('now')
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, (pinyin as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 2, (candidate as NSString).utf8String, -1, nil)
+
+        if sqlite3_step(stmt) != SQLITE_DONE {
+            NSLog("Failed to record selection: \(String(cString: sqlite3_errmsg(db)))")
+        }
+    }
+
+    private func loadFrequencies(pinyin: String) -> [String: Int] {
+        guard let db = db else { return [:] }
+
+        let sql = "SELECT candidate, count FROM user_freq WHERE pinyin = ?"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [:] }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, (pinyin as NSString).utf8String, -1, nil)
+
+        var freqs = [String: Int]()
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let candidatePtr = sqlite3_column_text(stmt, 0) else { continue }
+            let candidate = String(cString: candidatePtr)
+            let count = Int(sqlite3_column_int(stmt, 1))
+            freqs[candidate] = count
+        }
+        return freqs
     }
 
     // MARK: - JSON helpers

@@ -122,4 +122,47 @@ class CandidateCacheTests: XCTestCase {
         XCTAssertEqual(result?.matchedLength, [6, 6])
         XCTAssertEqual(result?.annotation, ["shi jie", "shi jie"])
     }
+
+    // MARK: - Frequency re-ranking tests
+
+    func testRerankWithNoFrequencyDataPreservesOrder() {
+        let candidates = ["你好", "你号", "尼好"]
+        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        XCTAssertEqual(reranked, ["你好", "你号", "尼好"])
+    }
+
+    func testRerankBoostsFrequentCandidate() {
+        cache.recordSelection(pinyin: "nihao", candidate: "尼好")
+
+        // Allow async write to complete
+        let expectation = self.expectation(description: "Frequency write")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 2)
+
+        let candidates = ["你好", "你号", "尼好"]
+        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        XCTAssertEqual(reranked.first, "尼好")
+    }
+
+    func testRerankBySelectionCount() {
+        // Select "你号" 3 times and "尼好" 1 time
+        for _ in 0..<3 {
+            cache.recordSelection(pinyin: "nihao", candidate: "你号")
+        }
+        cache.recordSelection(pinyin: "nihao", candidate: "尼好")
+
+        let expectation = self.expectation(description: "Frequency write")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 2)
+
+        let candidates = ["你好", "你号", "尼好"]
+        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        XCTAssertEqual(reranked[0], "你号")
+        XCTAssertEqual(reranked[1], "尼好")
+        XCTAssertEqual(reranked[2], "你好")
+    }
 }
