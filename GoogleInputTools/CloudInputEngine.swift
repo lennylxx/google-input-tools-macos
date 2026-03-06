@@ -188,9 +188,8 @@ class CloudInputEngine {
             }
         }
         currentTask = task
-        taskLock.unlock()
-
         task.resume()
+        taskLock.unlock()
     }
 
     static func parseResponse(_ json: Any?) -> ([String], [String: Any]?)? {

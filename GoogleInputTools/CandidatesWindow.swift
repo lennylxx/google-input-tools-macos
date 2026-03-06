@@ -96,13 +96,13 @@ class CandidatesWindow: NSWindow {
 
     func getCaretPosition(sender: IMKTextInput) -> NSPoint {
         var pos: NSPoint
-        let lineHeightRect: UnsafeMutablePointer<NSRect> = UnsafeMutablePointer<NSRect>.allocate(
-            capacity: 1)
+        var lineHeightRect = NSRect.zero
 
-        sender.attributes(forCharacterIndex: 0, lineHeightRectangle: lineHeightRect)
+        withUnsafeMutablePointer(to: &lineHeightRect) { ptr in
+            _ = sender.attributes(forCharacterIndex: 0, lineHeightRectangle: ptr)
+        }
 
-        let rect = lineHeightRect.pointee
-        pos = NSMakePoint(rect.origin.x, rect.origin.y)
+        pos = NSMakePoint(lineHeightRect.origin.x, lineHeightRect.origin.y)
 
         return pos
     }

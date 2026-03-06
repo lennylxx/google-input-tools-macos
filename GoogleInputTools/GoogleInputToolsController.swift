@@ -134,23 +134,30 @@ class GoogleInputToolsController: IMKInputController {
 
         let compString = InputContext.shared.composeString
         let index = InputContext.shared.currentIndex
-        let candidate = InputContext.shared.candidates[index]
+        let candidates = InputContext.shared.candidates
+        guard index >= 0 && index < candidates.count else {
+            NSLog("commitCandidate: index \(index) out of bounds (count=\(candidates.count))")
+            return
+        }
+        let candidate = candidates[index]
         let matched = InputContext.shared.matchedLength?[index] ?? compString.count
+        let clampedMatched = min(matched, compString.count)
 
         NSLog("compString=\(compString), length=\(compString.count)")
-        NSLog("currentIndex=\(index), currentCandidate=\(candidate), matchedLength=\(matched)")
+        NSLog(
+            "currentIndex=\(index), currentCandidate=\(candidate), matchedLength=\(clampedMatched)")
 
         // Record user selection for frequency-based re-ranking
-        let pinyin = String(compString.prefix(matched))
+        let pinyin = String(compString.prefix(clampedMatched))
         CandidateCache.shared.recordSelection(pinyin: pinyin, candidate: candidate)
 
         let fromIndex = compString.index(
-            compString.endIndex, offsetBy: matched - compString.count)
+            compString.endIndex, offsetBy: clampedMatched - compString.count)
         let remain = compString[fromIndex...]
 
         NSLog("fromIndex=\(fromIndex.utf16Offset(in: compString)), remain=\(remain)")
 
-        client().insertText(candidate, replacementRange: NSMakeRange(0, matched))
+        client().insertText(candidate, replacementRange: NSMakeRange(0, clampedMatched))
         let range = NSMakeRange(NSNotFound, NSNotFound)
         client().setMarkedText(remain, selectionRange: range, replacementRange: range)
 
@@ -265,8 +272,9 @@ class GoogleInputToolsController: IMKInputController {
 
         if event.type == NSEvent.EventType.keyDown {
 
-            let inputString = event.characters!
-            let key = inputString.first!
+            guard let inputString = event.characters, let key = inputString.first else {
+                return false
+            }
 
             NSLog("key=\(Utilities.TranslateKey(event)), keyCode=\(event.keyCode)")
 

@@ -62,13 +62,13 @@ class CandidateCache {
 
     func lookup(_ pinyin: String) -> CachedResult? {
         memoryLock.lock()
-        defer { memoryLock.unlock() }
 
         if let result = memoryCache[pinyin] {
             if let index = accessOrder.firstIndex(of: pinyin) {
                 accessOrder.remove(at: index)
             }
             accessOrder.append(pinyin)
+            memoryLock.unlock()
 
             dbQueue.async { [weak self] in
                 self?.touchInDatabase(pinyin)
@@ -76,19 +76,21 @@ class CandidateCache {
             return result
         }
 
-        // Fall back to SQLite for entries evicted from memory
-        if let result = lookupInDatabase(pinyin) {
-            memoryCache[pinyin] = result
-            accessOrder.append(pinyin)
-            evictIfNeeded()
+        memoryLock.unlock()
 
-            dbQueue.async { [weak self] in
-                self?.touchInDatabase(pinyin)
-            }
-            return result
+        // Fall back to SQLite for entries evicted from memory (no lock held)
+        guard let result = lookupInDatabase(pinyin) else { return nil }
+
+        memoryLock.lock()
+        memoryCache[pinyin] = result
+        accessOrder.append(pinyin)
+        evictIfNeeded()
+        memoryLock.unlock()
+
+        dbQueue.async { [weak self] in
+            self?.touchInDatabase(pinyin)
         }
-
-        return nil
+        return result
     }
 
     /// Find the longest cached prefix of the given pinyin for offline fallback.

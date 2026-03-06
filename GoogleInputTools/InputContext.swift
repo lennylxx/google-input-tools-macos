@@ -5,6 +5,8 @@
 //  Created by lennylxx on 8/22/21.
 //
 
+import Foundation
+
 class InputContext {
 
     static let shared = InputContext()
@@ -19,8 +21,12 @@ class InputContext {
     private var _numberedCandidates: [String] = []
 
     var candidates: [String] {
-        get { return _candidates }
+        get {
+            assert(Thread.isMainThread, "InputContext.candidates must be accessed on main thread")
+            return _candidates
+        }
         set {
+            assert(Thread.isMainThread, "InputContext.candidates must be set on main thread")
             _candidates = newValue
             currentPage = 0
             _numberedCandidates = []
