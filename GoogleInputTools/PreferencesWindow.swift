@@ -28,7 +28,7 @@ class PreferencesWindow: NSWindow {
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 725),
+            contentRect: NSMakeRect(0, 0, 420, 565),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -64,7 +64,7 @@ class PreferencesWindow: NSWindow {
 
         let generalLabel = makeSectionLabel("General", frame: NSMakeRect(margin, y, 200, 20))
         contentView.addSubview(generalLabel)
-        y -= 30
+        y -= 28
 
         // Input scheme
         let schemeLabel = makeLabel("Input Scheme:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -77,7 +77,7 @@ class PreferencesWindow: NSWindow {
         }
         contentView.addSubview(inputSchemePopup)
 
-        y -= 35
+        y -= 30
 
         // Frequency re-ranking
         let rerankLabel = makeLabel(
@@ -97,7 +97,7 @@ class PreferencesWindow: NSWindow {
         clearFreqButton.action = #selector(clearFrequencyData)
         contentView.addSubview(clearFreqButton)
 
-        y -= 35
+        y -= 30
 
         // Proxy mode
         let proxyTypeLabel = makeLabel("Proxy:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -115,7 +115,7 @@ class PreferencesWindow: NSWindow {
             frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
         contentView.addSubview(proxyNote)
 
-        y -= 55
+        y -= 42
 
         // Proxy host
         let proxyHostLabel = makeLabel("Proxy Host:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -125,7 +125,7 @@ class PreferencesWindow: NSWindow {
         proxyHostField.placeholderString = "127.0.0.1"
         contentView.addSubview(proxyHostField)
 
-        y -= 35
+        y -= 30
 
         // Proxy port
         let proxyPortLabel = makeLabel("Proxy Port:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -135,7 +135,7 @@ class PreferencesWindow: NSWindow {
         proxyPortField.placeholderString = "7890"
         contentView.addSubview(proxyPortField)
 
-        y -= 35
+        y -= 30
 
         // Proxy username
         let proxyUsernameLabel = makeLabel(
@@ -146,7 +146,7 @@ class PreferencesWindow: NSWindow {
         proxyUsernameField.placeholderString = "Optional"
         contentView.addSubview(proxyUsernameField)
 
-        y -= 35
+        y -= 30
 
         // Proxy password
         let proxyPasswordLabel = makeLabel(
@@ -157,7 +157,7 @@ class PreferencesWindow: NSWindow {
         proxyPasswordField.placeholderString = "Optional"
         contentView.addSubview(proxyPasswordField)
 
-        y -= 45
+        y -= 35
 
         // UI mode
         let uiLabel = makeLabel("UI Mode:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -166,6 +166,8 @@ class PreferencesWindow: NSWindow {
         uiModePopup.frame = NSMakeRect(controlX, y, controlWidth, 24)
         uiModePopup.removeAllItems()
         uiModePopup.addItems(withTitles: ["Custom UI", "System UI"])
+        uiModePopup.target = self
+        uiModePopup.action = #selector(uiModeChanged)
         contentView.addSubview(uiModePopup)
 
         let uiNote = makeNote(
@@ -173,13 +175,13 @@ class PreferencesWindow: NSWindow {
             frame: NSMakeRect(controlX, y - 18, controlWidth, 16))
         contentView.addSubview(uiNote)
 
-        y -= 55
+        y -= 42
 
         // MARK: - Custom UI settings
 
         let customLabel = makeSectionLabel("Custom UI", frame: NSMakeRect(margin, y, 200, 20))
         contentView.addSubview(customLabel)
-        y -= 30
+        y -= 28
 
         // Font size
         let fontLabel = makeLabel("Font Size:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -192,7 +194,7 @@ class PreferencesWindow: NSWindow {
         }
         contentView.addSubview(fontSizePopup)
 
-        y -= 35
+        y -= 30
 
         // Page size
         let pageLabel = makeLabel("Page Size:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -205,7 +207,7 @@ class PreferencesWindow: NSWindow {
         }
         contentView.addSubview(pageSizePopup)
 
-        y -= 35
+        y -= 30
 
         // Padding X
         let paddingXLabel = makeLabel("Padding X:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -218,7 +220,7 @@ class PreferencesWindow: NSWindow {
         }
         contentView.addSubview(paddingXPopup)
 
-        y -= 35
+        y -= 30
 
         // Padding Y
         let paddingYLabel = makeLabel("Padding Y:", frame: NSMakeRect(margin, y, labelWidth, 24))
@@ -231,7 +233,7 @@ class PreferencesWindow: NSWindow {
         }
         contentView.addSubview(paddingYPopup)
 
-        y -= 50
+        y -= 40
 
         // Save button
         let saveButton = NSButton(frame: NSMakeRect(controlX + controlWidth - 80, y, 80, 32))
@@ -242,6 +244,7 @@ class PreferencesWindow: NSWindow {
         contentView.addSubview(saveButton)
 
         updateProxyControls()
+        updateCustomUIControls()
     }
 
     private func makeLabel(_ text: String, frame: NSRect) -> NSTextField {
@@ -281,6 +284,10 @@ class PreferencesWindow: NSWindow {
         updateProxyControls()
     }
 
+    @objc private func uiModeChanged() {
+        updateCustomUIControls()
+    }
+
     @objc private func clearFrequencyData() {
         let alert = NSAlert()
         alert.alertStyle = .warning
@@ -303,6 +310,14 @@ class PreferencesWindow: NSWindow {
         proxyPortField.isEnabled = isEnabled
         proxyUsernameField.isEnabled = isEnabled
         proxyPasswordField.isEnabled = isEnabled
+    }
+
+    private func updateCustomUIControls() {
+        let isCustomUI = uiModePopup.indexOfSelectedItem == 0
+        fontSizePopup.isEnabled = isCustomUI
+        pageSizePopup.isEnabled = isCustomUI
+        paddingXPopup.isEnabled = isCustomUI
+        paddingYPopup.isEnabled = isCustomUI
     }
 
     private func presentValidationError(_ message: String) {
@@ -435,6 +450,7 @@ class PreferencesWindow: NSWindow {
         paddingYPopup.selectItem(at: max(0, min(paddingYIndex, paddingYPopup.numberOfItems - 1)))
 
         updateProxyControls()
+        updateCustomUIControls()
         promoteBackgroundApplication()
         self.center()
         self.orderFrontRegardless()
