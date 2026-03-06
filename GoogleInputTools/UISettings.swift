@@ -37,6 +37,11 @@ class UISettings {
         set { defaults.set(Double(newValue), forKey: "fontSize") }
     }
 
+    static var frequencyRerank: Bool {
+        get { defaults.object(forKey: "frequencyRerank") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "frequencyRerank") }
+    }
+
     static var pageSize: Int {
         get {
             let val = defaults.integer(forKey: "pageSize")

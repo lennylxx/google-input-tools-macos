@@ -94,8 +94,14 @@ class CloudInputEngine {
         // Check cache first
         if let cached = CandidateCache.shared.lookup(text) {
             NSLog("Cache hit: \(text)")
-            let reranked = CandidateCache.shared.rerank(pinyin: text, candidates: cached.candidates)
-            complete(reranked, cached.matchedLength)
+            if UISettings.frequencyRerank {
+                let (reranked, rerankedML) = CandidateCache.shared.rerank(
+                    pinyin: text, candidates: cached.candidates,
+                    matchedLength: cached.matchedLength)
+                complete(reranked, rerankedML)
+            } else {
+                complete(cached.candidates, cached.matchedLength)
+            }
             return
         }
 

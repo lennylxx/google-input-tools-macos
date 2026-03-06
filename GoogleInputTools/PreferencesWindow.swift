@@ -13,6 +13,7 @@ class PreferencesWindow: NSWindow {
     static let shared = PreferencesWindow()
 
     private let inputSchemePopup = NSPopUpButton()
+    private let frequencyRerankCheckbox = NSButton()
     private let proxyTypePopup = NSPopUpButton()
     private let proxyHostField = NSTextField()
     private let proxyPortField = NSTextField()
@@ -27,7 +28,7 @@ class PreferencesWindow: NSWindow {
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 690),
+            contentRect: NSMakeRect(0, 0, 420, 725),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -75,6 +76,26 @@ class PreferencesWindow: NSWindow {
             inputSchemePopup.addItem(withTitle: tool.displayName)
         }
         contentView.addSubview(inputSchemePopup)
+
+        y -= 35
+
+        // Frequency re-ranking
+        let rerankLabel = makeLabel(
+            "Smart Rerank:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(rerankLabel)
+
+        frequencyRerankCheckbox.frame = NSMakeRect(controlX, y, controlWidth - 70, 24)
+        frequencyRerankCheckbox.setButtonType(.switch)
+        frequencyRerankCheckbox.title = "Boost frequently selected candidates"
+        contentView.addSubview(frequencyRerankCheckbox)
+
+        let clearFreqButton = NSButton(
+            frame: NSMakeRect(controlX + controlWidth - 60, y, 60, 24))
+        clearFreqButton.title = "Clear"
+        clearFreqButton.bezelStyle = .rounded
+        clearFreqButton.target = self
+        clearFreqButton.action = #selector(clearFrequencyData)
+        contentView.addSubview(clearFreqButton)
 
         y -= 35
 
@@ -260,6 +281,21 @@ class PreferencesWindow: NSWindow {
         updateProxyControls()
     }
 
+    @objc private func clearFrequencyData() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Clear Frequency Data"
+        alert.informativeText =
+            "This will reset all learned candidate preferences. Are you sure?"
+        alert.addButton(withTitle: "Clear")
+        alert.addButton(withTitle: "Cancel")
+        alert.beginSheetModal(for: self) { response in
+            if response == .alertFirstButtonReturn {
+                CandidateCache.shared.clearFrequencies()
+            }
+        }
+    }
+
     private func updateProxyControls() {
         let selectedType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
         let isEnabled = selectedType != .none
@@ -318,6 +354,8 @@ class PreferencesWindow: NSWindow {
         let toolIndex = inputSchemePopup.indexOfSelectedItem
         UISettings.inputTool = InputTool.allCases[toolIndex]
 
+        UISettings.frequencyRerank = frequencyRerankCheckbox.state == .on
+
         let selectedProxyType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
         let proxyHost = proxyHostField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let proxyPortString = proxyPortField.stringValue.trimmingCharacters(
@@ -375,6 +413,7 @@ class PreferencesWindow: NSWindow {
         // Reload current values
         let currentToolIndex = InputTool.allCases.firstIndex(of: UISettings.inputTool) ?? 0
         inputSchemePopup.selectItem(at: currentToolIndex)
+        frequencyRerankCheckbox.state = UISettings.frequencyRerank ? .on : .off
         let currentProxyTypeIndex = ProxyType.allCases.firstIndex(of: ProxySettings.type) ?? 0
         proxyTypePopup.selectItem(at: currentProxyTypeIndex)
         proxyHostField.stringValue = ProxySettings.host

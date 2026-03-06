@@ -19,6 +19,7 @@ class CandidateCacheTests: XCTestCase {
     }
 
     override func tearDown() {
+        cache.close()
         cache = nil
         try? FileManager.default.removeItem(atPath: tempDBPath)
         super.tearDown()
@@ -32,7 +33,9 @@ class CandidateCacheTests: XCTestCase {
     }
 
     func testStoreAndLookupReturnsCachedResult() {
-        let metadata: [String: Any] = ["matched_length": [5, 2], "annotation": ["ni hao", "ni hao"]]
+        let metadata: [String: Any] = [
+            "matched_length": [5, 2], "annotation": ["ni hao", "ni hao"],
+        ]
         cache.store("nihao", candidates: ["你好", "你号"], metadata: metadata)
 
         let result = cache.lookup("nihao")
@@ -77,7 +80,9 @@ class CandidateCacheTests: XCTestCase {
     }
 
     func testEncodeDecodeJSONObject() {
-        let dict: [String: Any] = ["matched_length": [3, 1, 2], "annotation": ["a b c", "a", "a"]]
+        let dict: [String: Any] = [
+            "matched_length": [3, 1, 2], "annotation": ["a b c", "a", "a"],
+        ]
         let json = CandidateCache.encodeJSONObject(dict)
         XCTAssertNotNil(json)
 
@@ -99,7 +104,9 @@ class CandidateCacheTests: XCTestCase {
     // MARK: - SQLite persistence tests
 
     func testPersistenceAcrossInstances() {
-        let metadata: [String: Any] = ["matched_length": [6, 6], "annotation": ["shi jie", "shi jie"]]
+        let metadata: [String: Any] = [
+            "matched_length": [6, 6], "annotation": ["shi jie", "shi jie"],
+        ]
         cache.store("shijie", candidates: ["世界", "视界"], metadata: metadata)
 
         let expectation = self.expectation(description: "SQLite write")
@@ -127,14 +134,16 @@ class CandidateCacheTests: XCTestCase {
 
     func testRerankWithNoFrequencyDataPreservesOrder() {
         let candidates = ["你好", "你号", "尼好"]
-        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        let ml = [5, 5, 5]
+        let (reranked, rerankedML) = cache.rerank(
+            pinyin: "nihao", candidates: candidates, matchedLength: ml)
         XCTAssertEqual(reranked, ["你好", "你号", "尼好"])
+        XCTAssertEqual(rerankedML, [5, 5, 5])
     }
 
     func testRerankBoostsFrequentCandidate() {
         cache.recordSelection(pinyin: "nihao", candidate: "尼好")
 
-        // Allow async write to complete
         let expectation = self.expectation(description: "Frequency write")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             expectation.fulfill()
@@ -142,12 +151,14 @@ class CandidateCacheTests: XCTestCase {
         waitForExpectations(timeout: 2)
 
         let candidates = ["你好", "你号", "尼好"]
-        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        let ml = [5, 2, 5]
+        let (reranked, rerankedML) = cache.rerank(
+            pinyin: "nihao", candidates: candidates, matchedLength: ml)
         XCTAssertEqual(reranked.first, "尼好")
+        XCTAssertEqual(rerankedML?.first, 5)
     }
 
     func testRerankBySelectionCount() {
-        // Select "你号" 3 times and "尼好" 1 time
         for _ in 0..<3 {
             cache.recordSelection(pinyin: "nihao", candidate: "你号")
         }
@@ -160,9 +171,14 @@ class CandidateCacheTests: XCTestCase {
         waitForExpectations(timeout: 2)
 
         let candidates = ["你好", "你号", "尼好"]
-        let reranked = cache.rerank(pinyin: "nihao", candidates: candidates)
+        let ml = [5, 2, 5]
+        let (reranked, rerankedML) = cache.rerank(
+            pinyin: "nihao", candidates: candidates, matchedLength: ml)
         XCTAssertEqual(reranked[0], "你号")
+        XCTAssertEqual(rerankedML?[0], 2)
         XCTAssertEqual(reranked[1], "尼好")
+        XCTAssertEqual(rerankedML?[1], 5)
         XCTAssertEqual(reranked[2], "你好")
+        XCTAssertEqual(rerankedML?[2], 5)
     }
 }

@@ -48,6 +48,16 @@ class CandidateCache {
         }
     }
 
+    /// Synchronously drain pending DB operations and close the database.
+    func close() {
+        dbQueue.sync {
+            if db != nil {
+                sqlite3_close(db)
+                db = nil
+            }
+        }
+    }
+
     // MARK: - Public API
 
     func lookup(_ pinyin: String) -> CachedResult? {
@@ -107,19 +117,37 @@ class CandidateCache {
         }
     }
 
-    /// Re-rank candidates by boosting user-frequent selections to the top.
-    func rerank(pinyin: String, candidates: [String]) -> [String] {
-        let freqs = loadFrequencies(pinyin: pinyin)
-        guard !freqs.isEmpty else { return candidates }
+    /// Clear all frequency data so re-ranking starts fresh.
+    func clearFrequencies() {
+        dbQueue.async { [weak self] in
+            guard let self = self, let db = self.db else { return }
+            if sqlite3_exec(db, "DELETE FROM user_freq", nil, nil, nil) == SQLITE_OK {
+                NSLog("Cleared all frequency data")
+            } else {
+                NSLog(
+                    "Failed to clear frequency data: \(String(cString: sqlite3_errmsg(db)))")
+            }
+        }
+    }
 
-        return candidates.sorted { a, b in
-            let freqA = freqs[a] ?? 0
-            let freqB = freqs[b] ?? 0
+    /// Re-rank candidates by boosting user-frequent selections to the top.
+    /// Returns both the re-ranked candidates and correspondingly re-ordered matched lengths.
+    func rerank(pinyin: String, candidates: [String], matchedLength: [Int]?) -> ([String], [Int]?) {
+        let freqs = loadFrequencies(pinyin: pinyin)
+        guard !freqs.isEmpty else { return (candidates, matchedLength) }
+
+        let indices = candidates.indices.sorted { a, b in
+            let freqA = freqs[candidates[a]] ?? 0
+            let freqB = freqs[candidates[b]] ?? 0
             if freqA != freqB {
                 return freqA > freqB
             }
-            return false  // preserve original order for equal frequencies
+            return false
         }
+
+        let rerankedCandidates = indices.map { candidates[$0] }
+        let rerankedMatchedLength = matchedLength.map { ml in indices.map { ml[$0] } }
+        return (rerankedCandidates, rerankedMatchedLength)
     }
 
     // MARK: - Memory management
@@ -143,11 +171,15 @@ class CandidateCache {
     }
 
     private func openDatabase(at path: String) {
-        guard sqlite3_open(path, &db) == SQLITE_OK else {
+        let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX
+        guard sqlite3_open_v2(path, &db, flags, nil) == SQLITE_OK else {
             NSLog("Failed to open cache database at \(path)")
             db = nil
             return
         }
+
+        // WAL mode for better concurrent read/write performance
+        sqlite3_exec(db, "PRAGMA journal_mode=WAL", nil, nil, nil)
 
         let createSQL = """
             CREATE TABLE IF NOT EXISTS cache (
