@@ -67,5 +67,5 @@ A *cloud* input method that uses [Google Input Tools](https://www.google.com/inp
   - [x] Visual indicator (☁️) when candidates are fetched from the network
 - [x] Preferences menu (Input scheme, UI mode, font size, page size, smart rerank)
 - [x] Input tool switching, such as Pinyin, Shuangpin, Wubi, etc.
-- [ ] Fullwidth form of punctuation in Chinese mode
+- [x] Fullwidth form of punctuation in Chinese mode
 - [x] Allow to use HTTP/SOCKS proxy with optional authentication

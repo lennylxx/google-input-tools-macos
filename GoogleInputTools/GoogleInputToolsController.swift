@@ -357,6 +357,18 @@ class GoogleInputToolsController: IMKInputController {
             }
 
             else {
+                if UISettings.fullWidthPunctuation,
+                    let fullWidth = PunctuationMap.fullWidth(for: key)
+                {
+                    if InputContext.shared.candidates.count > 0 {
+                        commitCandidate(client: sender)
+                    } else if InputContext.shared.composeString.count > 0 {
+                        commitComposedString(client: sender)
+                    }
+                    let range = NSMakeRange(NSNotFound, NSNotFound)
+                    client().insertText(fullWidth, replacementRange: range)
+                    return true
+                }
                 commitComposedString(client: sender)
                 return false
             }

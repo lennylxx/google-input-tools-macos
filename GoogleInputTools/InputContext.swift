@@ -28,6 +28,8 @@ class InputContext {
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
     var isEnglishMode: Bool = false
+    var nextSingleQuoteIsOpen: Bool = true
+    var nextDoubleQuoteIsOpen: Bool = true
     var candidateSource: CandidateSource = .cache
 
     private var _candidates: [String] = []

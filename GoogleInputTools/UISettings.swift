@@ -58,6 +58,11 @@ class UISettings {
         set { defaults.set(Double(newValue), forKey: "paddingX") }
     }
 
+    static var fullWidthPunctuation: Bool {
+        get { defaults.object(forKey: "fullWidthPunctuation") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "fullWidthPunctuation") }
+    }
+
     static var paddingY: CGFloat {
         get {
             let val = defaults.double(forKey: "paddingY")

@@ -14,6 +14,7 @@ class PreferencesWindow: NSWindow {
 
     private let inputSchemePopup = NSPopUpButton()
     private let frequencyRerankCheckbox = NSButton()
+    private let fullWidthPunctuationCheckbox = NSButton()
     private let proxyTypePopup = NSPopUpButton()
     private let proxyHostField = NSTextField()
     private let proxyPortField = NSTextField()
@@ -28,7 +29,7 @@ class PreferencesWindow: NSWindow {
 
     init() {
         super.init(
-            contentRect: NSMakeRect(0, 0, 420, 565),
+            contentRect: NSMakeRect(0, 0, 420, 595),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -96,6 +97,18 @@ class PreferencesWindow: NSWindow {
         clearFreqButton.target = self
         clearFreqButton.action = #selector(clearFrequencyData)
         contentView.addSubview(clearFreqButton)
+
+        y -= 30
+
+        // Full-width punctuation
+        let punctuationLabel = makeLabel(
+            "Punctuation:", frame: NSMakeRect(margin, y, labelWidth, 24))
+        contentView.addSubview(punctuationLabel)
+
+        fullWidthPunctuationCheckbox.frame = NSMakeRect(controlX, y, controlWidth, 24)
+        fullWidthPunctuationCheckbox.setButtonType(.switch)
+        fullWidthPunctuationCheckbox.title = "Full-width punctuation"
+        contentView.addSubview(fullWidthPunctuationCheckbox)
 
         y -= 30
 
@@ -371,6 +384,8 @@ class PreferencesWindow: NSWindow {
 
         UISettings.frequencyRerank = frequencyRerankCheckbox.state == .on
 
+        UISettings.fullWidthPunctuation = fullWidthPunctuationCheckbox.state == .on
+
         let selectedProxyType = ProxyType.allCases[max(proxyTypePopup.indexOfSelectedItem, 0)]
         let proxyHost = proxyHostField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let proxyPortString = proxyPortField.stringValue.trimmingCharacters(
@@ -429,6 +444,7 @@ class PreferencesWindow: NSWindow {
         let currentToolIndex = InputTool.allCases.firstIndex(of: UISettings.inputTool) ?? 0
         inputSchemePopup.selectItem(at: currentToolIndex)
         frequencyRerankCheckbox.state = UISettings.frequencyRerank ? .on : .off
+        fullWidthPunctuationCheckbox.state = UISettings.fullWidthPunctuation ? .on : .off
         let currentProxyTypeIndex = ProxyType.allCases.firstIndex(of: ProxySettings.type) ?? 0
         proxyTypePopup.selectItem(at: currentProxyTypeIndex)
         proxyHostField.stringValue = ProxySettings.host
