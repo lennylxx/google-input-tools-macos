@@ -300,6 +300,15 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
+            // Single quote as pinyin syllable separator (e.g. xi'an → 西安)
+            else if key == "'" && InputContext.shared.composeString.count > 0
+                && !InputContext.shared.composeString.hasSuffix("'")
+            {
+                InputContext.shared.composeString.append("'")
+                updateCandidatesWindow()
+                return true
+            }
+
             else if key.isNumber {
                 let keyValue = Int(key.hexDigitValue!)
                 if uiManager.selectByNumber(keyValue: keyValue) {

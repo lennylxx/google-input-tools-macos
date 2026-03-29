@@ -192,6 +192,22 @@ class CloudInputEngine {
         taskLock.unlock()
     }
 
+    /*
+    [
+      "SUCCESS",
+      [[
+        "abc",
+        ["ABC","啊","阿","A","吖","腌","呵","阿布","嗄","啊不","锕"],
+        [],
+        {
+            "annotation":["a b c","a","a","a","a","a","a","a bu","a","a bu","a"],
+            "candidate_type":[0,0,0,0,0,0,0,0,0,0,0],
+            "lc":["0 0 0","16","16","0","16","16","16","16 16","16","16 16","16"],
+            "matched_length":[3,1,1,1,1,1,1,2,1,2,1]
+        }
+      ]]
+    ]
+    */
     static func parseResponse(_ json: Any?) -> ([String], [String: Any]?)? {
         guard let response = json as? [Any],
             let status = response[0] as? String,
