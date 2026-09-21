@@ -9,6 +9,11 @@ import AppKit
 
 public class Utilities {
 
+    /// Application shortcuts must never be treated as composing text or punctuation.
+    static func isApplicationShortcut(_ modifiers: NSEvent.ModifierFlags) -> Bool {
+        !modifiers.intersection([.command, .control, .option]).isEmpty
+    }
+
     static func TranslateKey(_ event: NSEvent) -> String {
         switch event.keyCode {
         case 36:

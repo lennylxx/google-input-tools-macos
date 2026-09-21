@@ -136,4 +136,43 @@ class ShiftToggleTrackerTests: XCTestCase {
         XCTAssertEqual(firstRelease, .shouldToggle)
         XCTAssertEqual(secondRelease, .none)
     }
+
+    func testDuplicateShiftPressDoesNotForgetAnInterveningKey() {
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_ANSI_A), modifierFlags: .shift)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        XCTAssertEqual(tracker.handleKeyUp(keyCode: UInt16(kVK_Shift)), .none)
+    }
+
+    func testLeavingClientCancelsPendingShiftToggle() {
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        tracker.cancel()
+        XCTAssertEqual(tracker.handleKeyUp(keyCode: UInt16(kVK_Shift)), .none)
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        XCTAssertEqual(tracker.handleKeyUp(keyCode: UInt16(kVK_Shift)), .shouldToggle)
+    }
+    func testApplicationShortcutsArePassedThrough() {
+        let modifierSets: [NSEvent.ModifierFlags] = [.command, [.command, .shift], .control, .option, [.control, .option]]
+        for modifiers in modifierSets {
+            for key in ["c", "v", "x", "a", "z", "s", "w", " ", "1", ","] {
+                let event = NSEvent.keyEvent(with: .keyDown, location: .zero,
+                    modifierFlags: modifiers, timestamp: 0, windowNumber: 0, context: nil,
+                    characters: key, charactersIgnoringModifiers: key, isARepeat: false, keyCode: 0)!
+                XCTAssertTrue(Utilities.isApplicationShortcut(event.modifierFlags), "\(key) with \(modifiers)")
+            }
+        }
+        XCTAssertFalse(Utilities.isApplicationShortcut([]))
+        XCTAssertFalse(Utilities.isApplicationShortcut(.shift))
+        XCTAssertFalse(Utilities.isApplicationShortcut(.capsLock))
+    }
+
+    func testCommandShiftDoesNotToggleChineseEnglishMode() {
+        let tracker = ShiftToggleTracker()
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: .shift)
+        _ = tracker.handleFlagsChanged(keyCode: UInt16(kVK_Command), modifierFlags: [.shift, .command])
+        XCTAssertEqual(tracker.handleFlagsChanged(keyCode: UInt16(kVK_Shift), modifierFlags: []), .none)
+        tracker.handleKeyDown(keyCode: UInt16(kVK_Shift), modifierFlags: [.command, .shift])
+        XCTAssertEqual(tracker.handleKeyUp(keyCode: UInt16(kVK_Shift)), .none)
+    }
 }

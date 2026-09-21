@@ -19,14 +19,14 @@ enum InputTool: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .Pinyin: return "Pinyin"
-        case .Shuangpin_ABC: return "Shuangpin (ABC)"
-        case .Shuangpin_Microsoft: return "Shuangpin (Microsoft)"
-        case .Shuangpin_Xiaohe: return "Shuangpin (Xiaohe)"
-        case .Shuangpin_Jiajia: return "Shuangpin (Jiajia)"
-        case .Shuangpin_Ziguang: return "Shuangpin (Ziguang)"
-        case .Shuangpin_Ziranma: return "Shuangpin (Ziranma)"
-        case .Wubi: return "Wubi 86"
+        case .Pinyin: return "全拼"
+        case .Shuangpin_ABC: return "智能 ABC 双拼"
+        case .Shuangpin_Microsoft: return "微软双拼"
+        case .Shuangpin_Xiaohe: return "小鹤双拼"
+        case .Shuangpin_Jiajia: return "拼音加加双拼"
+        case .Shuangpin_Ziguang: return "紫光双拼"
+        case .Shuangpin_Ziranma: return "自然码双拼"
+        case .Wubi: return "五笔 86"
         }
     }
 }
@@ -36,7 +36,14 @@ class CloudInputEngine {
     static let shared = CloudInputEngine()
 
     var inputTool: InputTool { UISettings.inputTool }
-    let _candidateNum = 11
+    private let cache: CandidateCache
+    private let sessionOverride: URLSession?
+    private var requestID = UUID()
+
+    init(cache: CandidateCache = .shared, session: URLSession? = nil) {
+        self.cache = cache
+        self.sessionOverride = session
+    }
 
     private var currentTask: URLSessionDataTask?
     private let taskLock = NSLock()
@@ -66,6 +73,7 @@ class CloudInputEngine {
     }
 
     private func makeSession() -> (session: URLSession, invalidateWhenDone: Bool) {
+        if let session = sessionOverride { return (session, false) }
         guard let proxyConfiguration = ProxySettings.configuration else {
             return (.shared, false)
         }
@@ -89,150 +97,119 @@ class CloudInputEngine {
 
     // MARK: - Network fetch
 
-    private func makeRequest(_ text: String) -> URLRequest {
-        let url = URL(
-            string:
-                "https://inputtools.google.com/request?text=\(text)&itc=\(inputTool.rawValue)&num=\(_candidateNum)&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage"
-        )!
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+    static func makeRequest(_ text: String, scheme: InputTool, candidateCount: Int) -> URLRequest {
+        var url = URLComponents(string: "https://inputtools.google.com/request")!
+        url.queryItems = ["text": text, "itc": scheme.rawValue, "num": String(candidateCount),
+            "cp": "0", "cs": "1", "ie": "utf-8", "oe": "utf-8", "app": "demopage"]
+            .map { URLQueryItem(name: $0.key, value: $0.value) }
+        var request = URLRequest(url: url.url!)
+        request.timeoutInterval = 5
         return request
     }
 
-    /// Fire-and-forget fetch that stores results in cache.
-    private func fetchAndCache(_ text: String) {
-        let request = makeRequest(text)
-        let (session, invalidateWhenDone) = makeSession()
-        let task = session.dataTask(with: request) { data, _, error in
-            defer {
-                if invalidateWhenDone {
-                    session.finishTasksAndInvalidate()
-                }
-            }
-            guard error == nil, let data = data else { return }
-            let json = try? JSONSerialization.jsonObject(with: data, options: [])
-            if let (candidates, metadata) = CloudInputEngine.parseResponse(json) {
-                CandidateCache.shared.store(text, candidates: candidates, metadata: metadata)
-                NSLog("Prefetched: \(text)")
-            }
-        }
-        task.resume()
+    private func isCurrent(_ id: UUID) -> Bool {
+        taskLock.lock()
+        defer { taskLock.unlock() }
+        return requestID == id
     }
 
-    func requestCandidates(
-        _ text: String,
-        complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?, _ source: CandidateSource) -> Void
-    ) {
-        // Check cache first
-        if let cached = CandidateCache.shared.lookup(text) {
-            NSLog("Cache hit: \(text)")
-            if UISettings.frequencyRerank {
-                let (reranked, rerankedML) = CandidateCache.shared.rerank(
-                    pinyin: text, candidates: cached.candidates,
-                    matchedLength: cached.matchedLength)
-                complete(reranked, rerankedML, .cache)
-            } else {
-                complete(cached.candidates, cached.matchedLength, .cache)
-            }
-            prefetch(text)
-            return
-        }
-
-        let request = makeRequest(text)
-
-        NSLog("%@", request.url!.absoluteString)
-
-        let startTime = CFAbsoluteTimeGetCurrent()
-        let (session, invalidateWhenDone) = makeSession()
-
+    func cancelPendingRequest() {
         taskLock.lock()
+        requestID = UUID()
         currentTask?.cancel()
-        let task = session.dataTask(with: request) { data, response, error in
-            defer {
-                if invalidateWhenDone {
-                    session.finishTasksAndInvalidate()
-                }
-            }
-
-            if let error = error as NSError?, error.code == NSURLErrorCancelled {
-                NSLog("Request cancelled: \(text)")
-                return
-            }
-
-            if error != nil {
-                NSLog("Request failed: \(text) — \(error!.localizedDescription)")
-                if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
-                    complete(cached.candidates, cached.matchedLength, .cache)
-                }
-                return
-            }
-
-            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            NSLog("Request completed: \(text) in %.0fms", elapsed)
-
-            guard let data = data else {
-                if let cached = CandidateCache.shared.lookupLongestPrefix(text) {
-                    complete(cached.candidates, cached.matchedLength, .cache)
-                }
-                return
-            }
-
-            let json = try? JSONSerialization.jsonObject(with: data, options: [])
-
-            if let (candidateArray, metadata) = CloudInputEngine.parseResponse(json) {
-                CandidateCache.shared.store(
-                    text, candidates: candidateArray, metadata: metadata)
-                let matchedLength = metadata?["matched_length"] as? [Int]
-                complete(candidateArray, matchedLength, .network)
-                self.prefetch(text)
-            }
-        }
-        currentTask = task
-        task.resume()
+        currentTask = nil
         taskLock.unlock()
     }
 
-    /*
-    [
-      "SUCCESS",
-      [[
-        "abc",
-        ["ABC","啊","阿","A","吖","腌","呵","阿布","嗄","啊不","锕"],
-        [],
-        {
-            "annotation":["a b c","a","a","a","a","a","a","a bu","a","a bu","a"],
-            "candidate_type":[0,0,0,0,0,0,0,0,0,0,0],
-            "lc":["0 0 0","16","16","0","16","16","16","16 16","16","16 16","16"],
-            "matched_length":[3,1,1,1,1,1,1,2,1,2,1]
+    /// The same merge and ranking pipeline is used for network, cache, and offline data.
+    func prepareCandidates(_ text: String, candidates: [String], matchedLength: [Int]?,
+                           scheme: InputTool, options: AccuracyOptions) -> ([String], [Int]?) {
+        let local = PersonalDictionary.candidates(for: text, scheme: scheme, options: options)
+        let (words, lengths) = PersonalDictionary.merge(text: text, cloud: candidates,
+            matchedLength: matchedLength, local: local)
+        let ranked = cache.rerank(pinyin: text, candidates: words, matchedLength: lengths,
+            scheme: scheme, options: options)
+        return (Array(ranked.0.prefix(options.candidateCount)),
+                ranked.1.map { Array($0.prefix(options.candidateCount)) })
+    }
+
+    func requestCandidates(
+        _ text: String, scheme selectedScheme: InputTool? = nil, options selectedOptions: AccuracyOptions? = nil,
+        complete: @escaping (_ candidates: [String], _ matchedLength: [Int]?, _ source: CandidateSource) -> Void
+    ) {
+        let scheme = selectedScheme ?? UISettings.inputTool
+        let options = selectedOptions ?? UISettings.accuracyOptions
+        let id = UUID()
+        taskLock.lock()
+        requestID = id
+        currentTask?.cancel()
+        currentTask = nil
+        taskLock.unlock()
+
+        func deliver(_ words: [String], _ lengths: [Int]?, _ source: CandidateSource) {
+            guard self.isCurrent(id) else { return }
+            let ranked = self.prepareCandidates(text, candidates: words, matchedLength: lengths,
+                scheme: scheme, options: options)
+            complete(ranked.0, ranked.1, source)
         }
-      ]]
-    ]
-    */
+
+        if let cached = cache.lookup(text, scheme: scheme, candidateCount: options.candidateCount) {
+            deliver(cached.candidates, cached.matchedLength, .cache)
+            prefetch(text, scheme: scheme, options: options)
+            return
+        }
+
+        let request = Self.makeRequest(text, scheme: scheme, candidateCount: options.candidateCount)
+        let (session, invalidateWhenDone) = makeSession()
+        let task = session.dataTask(with: request) { data, response, error in
+            defer { if invalidateWhenDone { session.finishTasksAndInvalidate() } }
+            guard self.isCurrent(id), (error as NSError?)?.code != NSURLErrorCancelled else { return }
+            if error == nil, let response = response as? HTTPURLResponse,
+               (200..<300).contains(response.statusCode), let data = data,
+               let parsed = Self.parseResponse(try? JSONSerialization.jsonObject(with: data)) {
+                self.cache.store(text, candidates: parsed.0, metadata: parsed.1,
+                    scheme: scheme, candidateCount: options.candidateCount)
+                deliver(parsed.0, parsed.1?["matched_length"] as? [Int], .network)
+                self.prefetch(text, scheme: scheme, options: options)
+            } else {
+                let cached = self.cache.lookup(text, scheme: scheme, candidateCount: options.candidateCount, allowExpired: true)
+                    ?? self.cache.lookupLongestPrefix(text, scheme: scheme, candidateCount: options.candidateCount)
+                deliver(cached?.candidates ?? [], cached?.matchedLength, .cache)
+            }
+        }
+        taskLock.lock()
+        if requestID == id { currentTask = task } else { task.cancel() }
+        taskLock.unlock()
+        task.resume()
+    }
+
     static func parseResponse(_ json: Any?) -> ([String], [String: Any]?)? {
-        guard let response = json as? [Any],
-            let status = response[0] as? String,
-            status == "SUCCESS",
-            let resultArray = response[1] as? [Any],
-            let candidateObject = resultArray.first as? [Any],
-            let candidateArray = candidateObject[1] as? [String],
-            let candidateMeta = candidateObject[3] as? [String: Any]
-        else {
-            return nil
+        guard let response = json as? [Any], response.count >= 2,
+              response[0] as? String == "SUCCESS",
+              let results = response[1] as? [Any],
+              let item = results.first as? [Any], item.count >= 4,
+              let input = item[0] as? String,
+              let candidates = item[1] as? [String],
+              let metadata = item[3] as? [String: Any] else { return nil }
+        if let value = metadata["matched_length"] {
+            guard let lengths = value as? [Int], lengths.count == candidates.count,
+                  lengths.allSatisfy({ $0 > 0 && $0 <= input.count }) else { return nil }
         }
-
-        return (candidateArray, candidateMeta)
+        return (candidates, metadata)
     }
 
-    // MARK: - Predictive prefetch
-
-    private func prefetch(_ pinyin: String) {
-        let predictions = CandidateCache.shared.predictNextInputs(prefix: pinyin)
-        guard !predictions.isEmpty else { return }
-        NSLog("Prefetching \(predictions.count) predictions for '\(pinyin)': \(predictions)")
-
-        for text in predictions {
-            fetchAndCache(text)
+    private func prefetch(_ text: String, scheme: InputTool, options: AccuracyOptions) {
+        for prediction in cache.predictNextInputs(prefix: text, scheme: scheme, candidateCount: options.candidateCount) {
+            let request = Self.makeRequest(prediction, scheme: scheme, candidateCount: options.candidateCount)
+            let (session, invalidateWhenDone) = makeSession()
+            session.dataTask(with: request) { data, response, error in
+                defer { if invalidateWhenDone { session.finishTasksAndInvalidate() } }
+                guard error == nil, let response = response as? HTTPURLResponse,
+                      (200..<300).contains(response.statusCode), let data = data,
+                      let parsed = Self.parseResponse(try? JSONSerialization.jsonObject(with: data)) else { return }
+                self.cache.store(prediction, candidates: parsed.0, metadata: parsed.1,
+                    scheme: scheme, candidateCount: options.candidateCount)
+            }.resume()
         }
     }
-
 }

@@ -15,7 +15,7 @@ enum ProxyType: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .none: return "Disabled"
+        case .none: return "关闭"
         case .http: return "HTTP / HTTPS"
         case .socks: return "SOCKS"
         }

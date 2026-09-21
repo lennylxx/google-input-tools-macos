@@ -146,4 +146,68 @@ class InputContextTests: XCTestCase {
         // isEnglishMode is NOT reset by clean()
         XCTAssertTrue(context.isEnglishMode)
     }
+    func testChangingInputImmediatelyInvalidatesOldCandidates() {
+        let context = InputContext(pageSize: 9)
+        context.composeString = "shi"
+        let revision = context.revision
+        XCTAssertTrue(context.acceptCandidates(["是"], matchedLength: nil, source: .network, revision: revision))
+        context.composeString = "shijie"
+        XCTAssertTrue(context.candidates.isEmpty)
+        XCTAssertFalse(context.acceptCandidates(["是"], matchedLength: nil, source: .network, revision: revision))
+    }
+
+    func testSameTextInNewCompositionRejectsOldResponse() {
+        let context = InputContext(pageSize: 9)
+        context.composeString = "ni"
+        let revision = context.revision
+        context.clean()
+        context.composeString = "ni"
+        XCTAssertFalse(context.acceptCandidates(["你"], matchedLength: [2], source: .network, revision: revision))
+    }
+
+    func testPendingSpaceIsBoundToTheCurrentComposition() {
+        let context = InputContext(pageSize: 9)
+        context.composeString = "ni"
+        context.pendingSpace = true
+        XCTAssertTrue(context.acceptCandidates(["你"], matchedLength: [2], source: .network, revision: context.revision))
+        XCTAssertTrue(context.pendingSpace)
+        context.composeString = "nihao"
+        XCTAssertFalse(context.pendingSpace)
+        XCTAssertTrue(context.candidates.isEmpty)
+    }
+
+    func testMalformedLengthsCannotCrashCommit() {
+        let context = InputContext(pageSize: 9)
+        context.composeString = "nihao"
+        context.acceptCandidates(["你好", "拟好"], matchedLength: [99], source: .network, revision: context.revision)
+        XCTAssertEqual(context.matchedLength, [5, 5])
+    }
+    func testPreferencesControlsFitScrollableDocument() throws {
+        let window = PreferencesWindow.shared
+        let scroll = try XCTUnwrap(window.contentView as? NSScrollView)
+        let document = try XCTUnwrap(scroll.documentView)
+        XCTAssertTrue(scroll.hasVerticalScroller)
+        for view in document.subviews {
+            XCTAssertGreaterThanOrEqual(view.frame.minY, 0)
+            XCTAssertLessThanOrEqual(view.frame.maxY, document.bounds.height)
+            XCTAssertLessThanOrEqual(view.frame.maxX, document.bounds.width)
+        }
+        // Give AppKit a visible backing surface without taking keyboard focus.
+        window.orderFront(nil)
+        defer { window.orderOut(nil) }
+        window.display()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        let bitmap = try XCTUnwrap(document.bitmapImageRepForCachingDisplay(in: document.bounds))
+        let graphics = try XCTUnwrap(NSGraphicsContext(bitmapImageRep: bitmap))
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = graphics
+        NSColor.windowBackgroundColor.setFill()
+        NSBezierPath(rect: document.bounds).fill()
+        document.displayIgnoringOpacity(document.bounds, in: graphics)
+        NSGraphicsContext.restoreGraphicsState()
+        let image = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("GoogleInputTools-preferences.png")
+        try image.write(to: url)
+        print("Preferences layout snapshot: \(url.path)")
+    }
 }

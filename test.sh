@@ -1,13 +1,10 @@
 #!/bin/bash
-set -e
-
-xcodebuild \
+set -euo pipefail
+cd "$(dirname "$0")"
+xcodebuild -quiet \
     -project GoogleInputTools.xcodeproj \
     -scheme GoogleInputToolsTests \
     -configuration Debug \
-    -destination 'platform=macOS' \
-    test \
-    2>&1 | grep -E "Test (Case|Suite)|passed|failed|Executed"
-
-echo ""
-echo "✅ All tests passed."
+    -destination "platform=macOS,arch=$(uname -m)" \
+    MACOSX_DEPLOYMENT_TARGET=12.0 test "$@"
+echo "All tests passed."

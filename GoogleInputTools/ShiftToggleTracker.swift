@@ -20,6 +20,10 @@ class ShiftToggleTracker {
 
     /// Process a flagsChanged event. Returns whether a toggle should occur.
     func handleFlagsChanged(keyCode: UInt16, modifierFlags: NSEvent.ModifierFlags) -> Result {
+        if Utilities.isApplicationShortcut(modifierFlags) {
+            cancel()
+            return .none
+        }
         guard isShiftKey(keyCode) else {
             return .none
         }
@@ -34,6 +38,10 @@ class ShiftToggleTracker {
 
     /// Process a keyDown event. Some clients emit modifier keyDown/keyUp events instead of flagsChanged.
     func handleKeyDown(keyCode: UInt16, modifierFlags: NSEvent.ModifierFlags) {
+        if Utilities.isApplicationShortcut(modifierFlags) {
+            cancel()
+            return
+        }
         if isShiftKey(keyCode) {
             startTrackingShift(keyCode)
             return
@@ -57,7 +65,15 @@ class ShiftToggleTracker {
         return keyCode == kVK_Shift || keyCode == kVK_RightShift
     }
 
+    func cancel() {
+        trackedShiftKeyCode = nil
+        shiftKeyUsedWithOtherKey = false
+    }
+
     private func startTrackingShift(_ keyCode: UInt16) {
+        // Some clients deliver both flagsChanged and keyDown for one press.
+        // Repeated modifier events must not erase intervening shifted keys.
+        guard trackedShiftKeyCode == nil else { return }
         trackedShiftKeyCode = keyCode
         shiftKeyUsedWithOtherKey = false
     }

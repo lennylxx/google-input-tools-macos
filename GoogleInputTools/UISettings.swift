@@ -13,6 +13,16 @@ class UISettings {
 
     // MARK: - Persisted settings
 
+    static var englishCompletion: Bool {
+        get { defaults.object(forKey: "englishCompletion") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "englishCompletion") }
+    }
+
+    static var pinyinTypoCorrection: Bool {
+        get { defaults.object(forKey: "pinyinTypoCorrection") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "pinyinTypoCorrection") }
+    }
+
     static var systemUI: Bool {
         get { defaults.object(forKey: "systemUI") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "systemUI") }
@@ -38,8 +48,57 @@ class UISettings {
     }
 
     static var frequencyRerank: Bool {
-        get { defaults.object(forKey: "frequencyRerank") as? Bool ?? true }
-        set { defaults.set(newValue, forKey: "frequencyRerank") }
+        get { rankingMode != .cloud }
+        set { rankingMode = newValue ? .balanced : .cloud }
+    }
+
+    static var rankingMode: RankingMode {
+        get { RankingMode(rawValue: defaults.string(forKey: "rankingMode") ?? "") ?? .balanced }
+        set { defaults.set(newValue.rawValue, forKey: "rankingMode") }
+    }
+
+    static var learnExplicitOnly: Bool {
+        get { defaults.object(forKey: "learnExplicitOnly") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "learnExplicitOnly") }
+    }
+
+    static var learningThreshold: Int {
+        get { validInteger("learningThreshold", values: [1, 3, 5], fallback: 5) }
+        set { defaults.set(newValue, forKey: "learningThreshold") }
+    }
+
+    static var frequencyHalfLifeDays: Int {
+        get { validInteger("frequencyHalfLifeDays", values: [0, 30, 90], fallback: 90) }
+        set { defaults.set(newValue, forKey: "frequencyHalfLifeDays") }
+    }
+
+    static var candidateCount: Int {
+        get { validInteger("candidateCount", values: [11, 20, 30], fallback: 20) }
+        set { defaults.set(newValue, forKey: "candidateCount") }
+    }
+
+    static var technicalDictionary: Bool {
+        get { defaults.object(forKey: "technicalDictionary") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "technicalDictionary") }
+    }
+
+    static var customPhrases: String {
+        get { defaults.string(forKey: "customPhrases") ?? "" }
+        set { defaults.set(newValue, forKey: "customPhrases") }
+    }
+
+    static var accuracyOptions: AccuracyOptions {
+        AccuracyOptions(ranking: rankingMode, explicitOnly: learnExplicitOnly,
+            minimumSelections: learningThreshold, halfLifeDays: frequencyHalfLifeDays,
+            candidateCount: candidateCount, technicalDictionary: technicalDictionary,
+            customPhrases: customPhrases)
+    }
+
+    private static func validInteger(_ key: String, values: [Int], fallback: Int) -> Int {
+        guard let value = defaults.object(forKey: key) as? Int, values.contains(value) else {
+            return fallback
+        }
+        return value
     }
 
     static var pageSize: Int {

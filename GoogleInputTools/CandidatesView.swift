@@ -2,163 +2,95 @@
 //  CandidatesView.swift
 //  GoogleInputTools
 //
-//  Created by lennylxx on 8/22/21.
-//
 
-import Foundation
-import SwiftUI
+import Cocoa
 
 class CandidatesView: NSView {
-
     override var isFlipped: Bool { true }
+    override var isOpaque: Bool { true }
 
-    private var selectionRange: NSRange = NSMakeRange(0, 0)
+    private(set) var candidateText = NSAttributedString(string: "")
+    private(set) var selectionRange = NSRange(location: 0, length: 0)
+    var maximumWidth: CGFloat = 2000
     private static let selectionPadding: CGFloat = 3
-    private static let composeBottomMargin: CGFloat = 4
 
-    private func buildComposeText() -> NSAttributedString? {
-        let composeString = InputContext.shared.composeString
-        if composeString.isEmpty { return nil }
-        return NSAttributedString(
-            string: composeString,
-            attributes: [
-                .font: UISettings.font,
-                .foregroundColor: NSColor.systemOrange,
-            ])
-    }
+    // Presentation is separate from the selectable model: invalidating a request
+    // must not erase the window for one frame or allow an old word to be committed.
+    func refresh(context: InputContext) {
+        guard !context.composeString.isEmpty else { reset(); return }
+        guard !context.isRequestPending else { return }
 
-    private func buildCandidateText() -> NSMutableAttributedString {
-        let context = InputContext.shared
-        let result = NSMutableAttributedString()
-
-        let pageCandidates = context.numberedPageCandidates
-        let candidateText = pageCandidates.joined(separator: " ")
-
-        result.append(
-            NSAttributedString(
-                string: candidateText,
-                attributes: [
-                    .font: UISettings.font,
-                    .foregroundColor: UISettings.TextColor,
-                ]))
-
-        // Track selection range within candidate text
-        var start = 0
-        let pageIndex = context.currentPageIndex
-        if pageIndex > 0 {
-            start = pageCandidates.prefix(pageIndex).joined(separator: " ").count + 1
-        }
-
-        let selection = context.currentNumberedPageCandidate
-        if selection.count > 0 {
-            selectionRange = NSMakeRange(start, selection.count)
+        let page = context.numberedPageCandidates
+        let result = NSMutableAttributedString(
+            string: page.isEmpty ? "暂无候选，按回车输入拼音" : page.joined(separator: " "),
+            attributes: [.font: UISettings.font, .foregroundColor: UISettings.TextColor])
+        let index = context.currentPageIndex
+        if page.indices.contains(index) {
+            let start = index == 0 ? 0 : page.prefix(index).joined(separator: " ").utf16.count + 1
+            selectionRange = NSRange(location: start, length: page[index].utf16.count)
         } else {
-            selectionRange = NSMakeRange(0, 0)
+            selectionRange = NSRange(location: 0, length: 0)
         }
-
-        // Append trailing indicators
         var suffix = context.pageIndicator
-        if let sourceIndicator = context.candidateSource.indicator {
-            suffix += " " + sourceIndicator
+        if !context.englishCandidateIndices.isEmpty { suffix += "  ⇥ 补全英文" }
+        if let indicator = context.candidateSource.indicator { suffix += " " + indicator }
+        result.append(NSAttributedString(string: suffix,
+            attributes: [.font: NSFont.systemFont(ofSize: 10), .foregroundColor: NSColor.gray]))
+        if !candidateText.isEqual(to: result) {
+            candidateText = result
         }
-        if !suffix.isEmpty {
-            result.append(
-                NSAttributedString(
-                    string: suffix,
-                    attributes: [
-                        .font: NSFont.systemFont(ofSize: 10),
-                        .foregroundColor: NSColor.gray,
-                    ]))
-        }
-
-        return result
+        needsDisplay = true
     }
 
-    private func measureText(_ text: NSAttributedString) -> NSSize {
-        let rect = text.boundingRect(
-            with: NSSize(width: CGFloat(2000), height: CGFloat.greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading])
-        return NSMakeSize(ceil(rect.width), ceil(rect.height))
+    func reset() {
+        candidateText = NSAttributedString(string: "")
+        selectionRange = NSRange(location: 0, length: 0)
+    }
+
+    private var horizontalInset: CGFloat { UISettings.paddingX + Self.selectionPadding }
+    private var verticalInset: CGFloat { UISettings.paddingY + Self.selectionPadding }
+
+    private func layout(width: CGFloat) -> (NSTextStorage, NSLayoutManager, NSTextContainer) {
+        let storage = NSTextStorage(attributedString: candidateText)
+        let manager = NSLayoutManager()
+        let container = NSTextContainer(size: NSSize(width: max(1, width), height: .greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        manager.addTextContainer(container)
+        storage.addLayoutManager(manager)
+        manager.ensureLayout(for: container)
+        return (storage, manager, container)
     }
 
     var preferredSize: NSSize {
-        let pad = Self.selectionPadding
-        let px = UISettings.paddingX
-        let py = UISettings.paddingY
-
-        let composeText = buildComposeText()
-        let candidateText = buildCandidateText()
-        if candidateText.length == 0 { return .zero }
-
-        let candidateSize = measureText(candidateText)
-        var contentWidth = candidateSize.width
-        var contentHeight = pad + candidateSize.height + pad
-
-        if let ct = composeText {
-            let composeSize = measureText(ct)
-            contentWidth = max(contentWidth, composeSize.width)
-            contentHeight = composeSize.height + Self.composeBottomMargin + contentHeight
+        guard candidateText.length > 0 else { return .zero }
+        let (storage, manager, container) = layout(width: maximumWidth - horizontalInset * 2)
+        return withExtendedLifetime(storage) {
+            let rect = manager.usedRect(for: container)
+            return NSSize(width: min(maximumWidth, ceil(rect.width) + horizontalInset * 2),
+                          height: ceil(rect.height) + verticalInset * 2)
         }
-
-        return NSMakeSize(
-            contentWidth + (px + pad) * 2,
-            contentHeight + py * 2)
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        NSLog("CandidatesView::draw")
+        UISettings.TextBackground.setFill()
+        NSBezierPath(rect: bounds).fill()
+        guard candidateText.length > 0 else { return }
 
-        let bounds: NSRect = self.bounds
-        UISettings.TextBackground.set()
-        NSBezierPath.fill(bounds)
-
-        let pad = Self.selectionPadding
-        let px = UISettings.paddingX
-        let py = UISettings.paddingY
-
-        let composeText = buildComposeText()
-        let candidateText = buildCandidateText()
-        if candidateText.length == 0 { return }
-
-        var y = py
-
-        // Upper box: compose string
-        if let ct = composeText {
-            ct.draw(at: NSPoint(x: px + pad, y: y))
-            y += measureText(ct).height + Self.composeBottomMargin
+        let origin = NSPoint(x: horizontalInset, y: verticalInset)
+        let (storage, manager, container) = layout(width: bounds.width - horizontalInset * 2)
+        withExtendedLifetime(storage) {
+            if selectionRange.length > 0 {
+                let glyphs = manager.glyphRange(forCharacterRange: selectionRange, actualCharacterRange: nil)
+                // A long candidate may span lines on a small display.
+                manager.enumerateEnclosingRects(forGlyphRange: glyphs,
+                    withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0), in: container) { rect, _ in
+                    let highlight = rect.offsetBy(dx: origin.x, dy: origin.y)
+                        .insetBy(dx: -Self.selectionPadding, dy: -Self.selectionPadding)
+                    UISettings.SelectionBackground.setFill()
+                    NSBezierPath(roundedRect: highlight, xRadius: 3, yRadius: 3).fill()
+                }
+            }
+            manager.drawGlyphs(forGlyphRange: manager.glyphRange(for: container), at: origin)
         }
-
-        // Lower box: candidates with selection highlight
-        let candidateOrigin = NSPoint(x: px + pad, y: y + pad)
-        let candidateSize = NSSize(
-            width: bounds.width - (px + pad) * 2,
-            height: bounds.height - y - pad - py)
-
-        let textStorage = NSTextStorage(attributedString: candidateText)
-        let layoutManager = NSLayoutManager()
-        let textContainer = NSTextContainer(size: candidateSize)
-        textContainer.lineFragmentPadding = 0
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
-        layoutManager.ensureLayout(for: textContainer)
-
-        if selectionRange.length > 0 {
-            let glyphRange = layoutManager.glyphRange(
-                forCharacterRange: selectionRange, actualCharacterRange: nil)
-            var selRect = layoutManager.boundingRect(
-                forGlyphRange: glyphRange, in: textContainer)
-
-            selRect.origin.x += candidateOrigin.x - pad
-            selRect.origin.y += candidateOrigin.y - pad
-            selRect.size.width += pad * 2
-            selRect.size.height += pad * 2
-
-            UISettings.SelectionBackground.setFill()
-            let path = NSBezierPath(roundedRect: selRect, xRadius: 3, yRadius: 3)
-            path.fill()
-        }
-
-        let fullGlyphRange = layoutManager.glyphRange(for: textContainer)
-        layoutManager.drawGlyphs(forGlyphRange: fullGlyphRange, at: candidateOrigin)
     }
 }

@@ -107,9 +107,9 @@ class CloudInputEngineTests: XCTestCase {
     // MARK: - InputTool
 
     func testInputToolDisplayNames() {
-        XCTAssertEqual(InputTool.Pinyin.displayName, "Pinyin")
-        XCTAssertEqual(InputTool.Wubi.displayName, "Wubi 86")
-        XCTAssertEqual(InputTool.Shuangpin_Xiaohe.displayName, "Shuangpin (Xiaohe)")
+        XCTAssertEqual(InputTool.Pinyin.displayName, "全拼")
+        XCTAssertEqual(InputTool.Wubi.displayName, "五笔 86")
+        XCTAssertEqual(InputTool.Shuangpin_Xiaohe.displayName, "小鹤双拼")
     }
 
     func testInputToolRawValues() {
@@ -174,4 +174,100 @@ class CloudInputEngineTests: XCTestCase {
 
         XCTAssertNil(ProxySettings.configuration)
     }
+    func testTruncatedOrMalformedCloudResponsesAreRejected() {
+        let invalidResponses: [Any] = [[], ["SUCCESS"], ["SUCCESS", [[]]],
+            ["SUCCESS", [["nihao", ["你好", "你"], [], ["matched_length": [5]]]]],
+            ["SUCCESS", [["nihao", ["你好"], [], ["matched_length": [99]]]]],
+            ["SUCCESS", [["nihao", ["你好"], [], ["matched_length": [0]]]]]]
+        for value in invalidResponses {
+            XCTAssertNil(CloudInputEngine.parseResponse(value))
+        }
+    }
+
+    func testRequestEscapesInputAndUsesSelectedCandidateCount() {
+        let request = CloudInputEngine.makeRequest("xi'an&test", scheme: .Pinyin, candidateCount: 20)
+        let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!
+        XCTAssertEqual(items.first { $0.name == "text" }?.value, "xi'an&test")
+        XCTAssertEqual(items.first { $0.name == "num" }?.value, "20")
+        XCTAssertEqual(items.first { $0.name == "itc" }?.value, InputTool.Pinyin.rawValue)
+    }
+
+    func testPersonalDictionaryIsFullPinyinOnlyAndDeduplicates() throws {
+        var options = AccuracyOptions()
+        options.customPhrases = "jiekou\t接口\njiekou\t接口测试\n# comment"
+        XCTAssertEqual(PersonalDictionary.candidates(for: "jiekou", scheme: .Pinyin, options: options), ["接口", "接口测试"])
+        XCTAssertTrue(PersonalDictionary.candidates(for: "jiekou", scheme: .Wubi, options: options).isEmpty)
+        let merged = PersonalDictionary.merge(text: "jiekou", cloud: ["借口", "接口"],
+            matchedLength: [6, 6], local: ["接口", "接口测试"])
+        XCTAssertEqual(merged.0, ["借口", "接口测试", "接口"])
+        XCTAssertEqual(merged.1, [6, 6, 6])
+        XCTAssertThrowsError(try PersonalDictionary.parse("jiekou"))
+        XCTAssertThrowsError(try PersonalDictionary.parse("123\t接口"))
+    }
+
+    func testCloudAndCacheUseIdenticalPersonalRanking() {
+        let cache = CandidateCache(databasePath: ":memory:")
+        defer { cache.close() }
+        for _ in 0..<5 { cache.recordSelection(pinyin: "shijie", candidate: "视界") }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [CandidateResponseProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel() }
+        let engine = CloudInputEngine(cache: cache, session: session)
+        let network = expectation(description: "network candidates")
+        let cached = expectation(description: "cached candidates")
+        var options = AccuracyOptions()
+        options.technicalDictionary = false
+        engine.requestCandidates("shijie", scheme: .Pinyin, options: options) { words, lengths, source in
+            XCTAssertEqual(source, .network)
+            XCTAssertEqual(words, ["视界", "世界"])
+            XCTAssertEqual(lengths, [6, 6])
+            network.fulfill()
+            engine.requestCandidates("shijie", scheme: .Pinyin, options: options) { again, againLengths, source in
+                XCTAssertEqual(source, .cache)
+                XCTAssertEqual(again, words)
+                XCTAssertEqual(againLengths, lengths)
+                cached.fulfill()
+            }
+        }
+        wait(for: [network, cached], timeout: 5)
+    }
+
+    func testOfflineStillOffersLocalTechnicalWords() {
+        let cache = CandidateCache(databasePath: ":memory:")
+        defer { cache.close() }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [OfflineCandidateProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel() }
+        let engine = CloudInputEngine(cache: cache, session: session)
+        let result = expectation(description: "offline dictionary")
+        engine.requestCandidates("jiekou", scheme: .Pinyin, options: AccuracyOptions()) { words, lengths, source in
+            XCTAssertEqual(words, ["接口"])
+            XCTAssertEqual(lengths, [6])
+            XCTAssertEqual(source, .cache)
+            result.fulfill()
+        }
+        wait(for: [result], timeout: 5)
+    }
+}
+
+private final class CandidateResponseProtocol: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        let data = try! JSONSerialization.data(withJSONObject: ["SUCCESS", [["shijie", ["世界", "视界"], [], ["matched_length": [6, 6]]]]])
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
+private final class OfflineCandidateProtocol: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() { client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet)) }
+    override func stopLoading() {}
 }

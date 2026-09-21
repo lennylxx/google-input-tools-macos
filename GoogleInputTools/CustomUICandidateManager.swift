@@ -34,10 +34,7 @@ class CustomUICandidateManager: CandidateUIManager {
             context.currentIndex += 1
         }
 
-        // keep the marked text unchanged
-        let compString = context.composeString
-        let range = NSMakeRange(NSNotFound, NSNotFound)
-        client.setMarkedText(compString, selectionRange: range, replacementRange: range)
+        // Selection only affects the candidate highlight, not the host's layout.
         CandidatesWindow.shared.update(sender: client)
     }
 
