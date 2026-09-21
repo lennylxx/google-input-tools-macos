@@ -24,7 +24,16 @@ class InputContext {
     static let shared = InputContext()
 
     // MARK: - Common state
-    var composeString: String = ""
+    var composeString: String = "" {
+        didSet { invalidateCandidates() }
+    }
+    private(set) var revision: UInt64 = 0
+    private(set) var isRequestPending = false
+    var pendingSpace = false
+    var continuesEnglishOnSpace = false
+    private(set) var englishCandidateIndices = Set<Int>()
+    private(set) var candidateLearningInputs = [String?]()
+    var currentCandidateIsEnglish: Bool { englishCandidateIndices.contains(currentIndex) }
     var matchedLength: [Int]? = []
     var currentIndex: Int = 0
     var isEnglishMode: Bool = false
@@ -43,6 +52,10 @@ class InputContext {
         set {
             assert(Thread.isMainThread, "InputContext.candidates must be set on main thread")
             _candidates = newValue
+            englishCandidateIndices = []
+            candidateLearningInputs = []
+            currentIndex = 0
+            visiblePageStart = 0
             currentPage = 0
             _numberedCandidates = []
             for i in 0..<_candidates.count {
@@ -125,5 +138,46 @@ class InputContext {
         candidateSource = .cache
         _candidates = []
         _numberedCandidates = []
+    }
+
+    func invalidateCandidates() {
+        revision &+= 1
+        isRequestPending = !composeString.isEmpty
+        _candidates = []
+        _numberedCandidates = []
+        matchedLength = []
+        currentIndex = 0
+        currentPage = 0
+        visiblePageStart = 0
+        pendingSpace = false
+        continuesEnglishOnSpace = false
+        englishCandidateIndices = []
+        candidateLearningInputs = []
+    }
+
+    @discardableResult
+    func acceptCandidates(_ values: [String], matchedLength: [Int]?,
+                          source: CandidateSource, revision expected: UInt64) -> Bool {
+        guard revision == expected, !composeString.isEmpty else { return false }
+        isRequestPending = false
+        candidates = values
+        self.matchedLength = values.indices.map { index in
+            if let lengths = matchedLength, index < lengths.count,
+               lengths[index] > 0, lengths[index] <= composeString.count {
+                return lengths[index]
+            }
+            return composeString.count
+        }
+        candidateSource = source
+        return true
+    }
+
+    @discardableResult
+    func acceptSuggestions(_ suggestions: [InputSuggestion], source: CandidateSource, revision: UInt64) -> Bool {
+        guard acceptCandidates(suggestions.map(\.text), matchedLength: suggestions.map(\.consumed),
+                               source: source, revision: revision) else { return false }
+        englishCandidateIndices = Set(suggestions.indices.filter { suggestions[$0].isEnglish })
+        candidateLearningInputs = suggestions.map(\.learningInput)
+        return true
     }
 }

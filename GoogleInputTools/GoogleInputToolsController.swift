@@ -8,6 +8,19 @@
 import Foundation
 import InputMethodKit
 
+// The host must lay out the actual pinyin, including line wrapping. AppKit ranges
+// are UTF-16 offsets; the selection is relative to the marked string.
+struct CompositionText {
+    let string: String
+    var selectionRange: NSRange { NSRange(location: string.utf16.count, length: 0) }
+    let replacementRange = NSRange(location: NSNotFound, length: 0)
+
+    func apply(to client: IMKTextInput) {
+        client.setMarkedText(string, selectionRange: selectionRange,
+                             replacementRange: replacementRange)
+    }
+}
+
 class GoogleInputToolsController: IMKInputController {
 
     // Prevent ARC from deallocating controllers while InputMethodKit still holds unretained references
@@ -17,6 +30,8 @@ class GoogleInputToolsController: IMKInputController {
     private var systemUIManager: SystemUICandidateManager?
     private var server: IMKServer
     private var shiftTracker = ShiftToggleTracker()
+    var inputEngine = MixedInputEngine.shared
+    var learningCache = CandidateCache.shared
 
     override init!(server: IMKServer, delegate: Any, client inputClient: Any) {
         NSLog("\(#function)(\(inputClient))")
@@ -53,6 +68,13 @@ class GoogleInputToolsController: IMKInputController {
             uiManager = CustomUICandidateManager()
             systemUIManager = nil
         }
+        InputContext.shared.pageSize = UISettings.pageSize
+        InputContext.shared.invalidateCandidates()
+        if InputContext.shared.isEnglishMode {
+            commitComposedString(client: client())
+            return
+        }
+        if !InputContext.shared.composeString.isEmpty { updateCandidatesWindow() }
     }
 
     override func client() -> (IMKTextInput & NSObjectProtocol)! {
@@ -62,6 +84,7 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func activateServer(_ sender: Any!) {
+        shiftTracker.cancel()
         guard let client = sender as? IMKTextInput else {
             return
         }
@@ -72,6 +95,7 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func deactivateServer(_ sender: Any) {
+        shiftTracker.cancel()
         guard let client = sender as? IMKTextInput else {
             return
         }
@@ -83,25 +107,32 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     func getAndRenderCandidates(_ compString: String) {
-
-        CloudInputEngine.shared.requestCandidates(compString) { candidates, matchedLength, source in
+        let revision = InputContext.shared.revision
+        let scheme = UISettings.inputTool
+        let englishMode = InputContext.shared.isEnglishMode
+        let continuesEnglish = inputEngine.request(compString, scheme: scheme,
+            options: UISettings.accuracyOptions, englishEnabled: UISettings.englishCompletion,
+            typoEnabled: UISettings.pinyinTypoCorrection) { result in
             DispatchQueue.main.async {
-                // Discard stale results if compose string has changed
-                guard InputContext.shared.composeString == compString else {
-                    NSLog("Discarding stale results for: \(compString)")
+                let context = InputContext.shared
+                guard UISettings.inputTool == scheme, context.isEnglishMode == englishMode,
+                    context.acceptSuggestions(result.suggestions, source: result.source, revision: revision) else {
                     return
                 }
-
-                NSLog("main thread candidates: \(candidates)")
-
-                InputContext.shared.candidates = candidates
-                InputContext.shared.matchedLength = matchedLength
-                InputContext.shared.candidateSource = source
-
+                if context.pendingSpace && !result.suggestions.isEmpty {
+                    context.pendingSpace = false
+                    self.commitCandidate(client: self.client())
+                    return
+                }
+                if result.suggestions.isEmpty && context.continuesEnglishOnSpace {
+                    self.uiManager.hide()
+                    return
+                }
                 self.uiManager.updateCandidates(client: self.client())
                 self.uiManager.show()
             }
         }
+        InputContext.shared.continuesEnglishOnSpace = continuesEnglish
     }
 
     func updateCandidatesWindow() {
@@ -110,35 +141,27 @@ class GoogleInputToolsController: IMKInputController {
         let compString = InputContext.shared.composeString
         NSLog("compString=\(compString)")
 
-        let range = NSMakeRange(NSNotFound, NSNotFound)
-
         if compString.count > 0 {
-            if UISettings.systemUI {
-                // System UI: show compose string as marked text in the text field
-                client().setMarkedText(
-                    compString, selectionRange: range, replacementRange: range)
-            } else {
-                // Custom UI: use zero-width space to keep compose session active
-                // without showing anything visible — compose string is shown in candidate window
-                client().setMarkedText(
-                    "\u{200B}", selectionRange: range, replacementRange: range)
+            CompositionText(string: compString).apply(to: client())
+            // Preserve the last rendered candidates while the new request is in
+            // flight. Only the custom window needs to follow the updated caret.
+            if !UISettings.systemUI {
+                self.uiManager.updateCandidates(client: self.client())
+                self.uiManager.show()
             }
-            // Refresh the window immediately to show the updated compose string,
-            // even before the API response arrives (which may cancel prior requests)
-            self.uiManager.updateCandidates(client: self.client())
-            self.uiManager.show()
             self.getAndRenderCandidates(compString)
         } else {
-            client().setMarkedText("", selectionRange: range, replacementRange: range)
+            CompositionText(string: "").apply(to: client())
             uiManager.reset()
         }
     }
 
     func commitComposedString(client sender: Any!) {
         let compString = InputContext.shared.composeString
-        let range = NSMakeRange(NSNotFound, NSNotFound)
-
-        client().setMarkedText("", selectionRange: range, replacementRange: range)
+        guard !compString.isEmpty else { return }
+        let range = NSMakeRange(NSNotFound, 0)
+        // insertText replaces the marked range in one edit, avoiding a temporary
+        // empty line and caret jump at the wrapping boundary.
         client().insertText(compString, replacementRange: range)
 
         InputContext.shared.clean()
@@ -156,7 +179,8 @@ class GoogleInputToolsController: IMKInputController {
             return
         }
         let candidate = candidates[index]
-        let matched = InputContext.shared.matchedLength?[index] ?? compString.count
+        let lengths = InputContext.shared.matchedLength ?? []
+        let matched = index < lengths.count ? lengths[index] : compString.count
         let clampedMatched = min(matched, compString.count)
 
         NSLog("compString=\(compString), length=\(compString.count)")
@@ -164,8 +188,17 @@ class GoogleInputToolsController: IMKInputController {
             "currentIndex=\(index), currentCandidate=\(candidate), matchedLength=\(clampedMatched)")
 
         // Record user selection for frequency-based re-ranking
-        let pinyin = String(compString.prefix(clampedMatched))
-        CandidateCache.shared.recordSelection(pinyin: pinyin, candidate: candidate)
+        let context = InputContext.shared
+        if !context.currentCandidateIsEnglish {
+            let pinyin = index < context.candidateLearningInputs.count
+                ? context.candidateLearningInputs[index] ?? String(compString.prefix(clampedMatched))
+                : String(compString.prefix(clampedMatched))
+            let prefix = MixedInputQuery(compString).prefix
+            let learnedCandidate = candidate.hasPrefix(prefix) ? String(candidate.dropFirst(prefix.count)) : candidate
+            learningCache.recordSelection(pinyin: pinyin, candidate: learnedCandidate,
+                scheme: UISettings.inputTool, explicit: index > 0,
+                options: UISettings.accuracyOptions)
+        }
 
         let fromIndex = compString.index(
             compString.endIndex, offsetBy: clampedMatched - compString.count)
@@ -173,8 +206,7 @@ class GoogleInputToolsController: IMKInputController {
 
         NSLog("fromIndex=\(fromIndex.utf16Offset(in: compString)), remain=\(remain)")
 
-        let range = NSMakeRange(NSNotFound, NSNotFound)
-        client().setMarkedText("", selectionRange: range, replacementRange: range)
+        let range = NSMakeRange(NSNotFound, 0)
         client().insertText(candidate, replacementRange: range)
 
         InputContext.shared.clean()
@@ -205,7 +237,8 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func commitComposition(_ sender: Any!) {
-        NSLog("\(#function)")
+        guard !InputContext.shared.composeString.isEmpty else { return }
+        commitComposedString(client: sender)
     }
 
     override func updateComposition() {
@@ -213,7 +246,8 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     override func cancelComposition() {
-        NSLog("\(#function)")
+        guard !InputContext.shared.composeString.isEmpty else { return }
+        commitComposedString(client: client())
     }
 
     override func selectionRange() -> NSRange {
@@ -229,8 +263,16 @@ class GoogleInputToolsController: IMKInputController {
 
     override func menu() -> NSMenu! {
         let menu = NSMenu()
+        for (index, title) in ["中英混输", "纯英文"].enumerated() {
+            let item = NSMenuItem(title: title, action: #selector(selectInputMode(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = index
+            item.state = InputContext.shared.isEnglishMode == (index == 1) ? .on : .off
+            menu.addItem(item)
+        }
+        menu.addItem(NSMenuItem.separator())
         let prefsItem = NSMenuItem(
-            title: "Preferences…",
+            title: "设置…",
             action: #selector(showPreferences(_:)),
             keyEquivalent: ",")
         prefsItem.target = self
@@ -243,17 +285,28 @@ class GoogleInputToolsController: IMKInputController {
     }
 
     private func toggleEnglishMode(client sender: Any!) {
-        let context = InputContext.shared
-        context.isEnglishMode.toggle()
-        NSLog("Shift toggled, isEnglishMode=\(context.isEnglishMode)")
+        setEnglishMode(!InputContext.shared.isEnglishMode, client: sender)
+    }
 
-        if context.isEnglishMode && context.composeString.count > 0 {
-            commitComposedString(client: sender)
-        }
+    @objc private func selectInputMode(_ sender: NSMenuItem) {
+        setEnglishMode(sender.tag == 1, client: client())
+    }
+
+    private func setEnglishMode(_ enabled: Bool, client sender: Any!) {
+        let context = InputContext.shared
+        if !context.composeString.isEmpty { commitComposedString(client: sender) }
+        shiftTracker.cancel()
+        context.isEnglishMode = enabled
     }
 
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
-        NSLog("%@", event)
+        guard let event = event else { return false }
+        // Return before any composition, candidate, or punctuation handling.
+        if Utilities.isApplicationShortcut(event.modifierFlags) {
+            shiftTracker.cancel()
+            InputContext.shared.pendingSpace = false
+            return false
+        }
 
         // Bare Shift key toggles Chinese/English mode (on key release, only if no other key was pressed)
         if event.type == .flagsChanged {
@@ -281,20 +334,39 @@ class GoogleInputToolsController: IMKInputController {
             }
         }
 
-        // In English mode, pass all keys through
-        if InputContext.shared.isEnglishMode {
-            return false
-        }
-
         if event.type == NSEvent.EventType.keyDown {
 
             guard let inputString = event.characters, let key = inputString.first else {
                 return false
             }
 
+            let context = InputContext.shared
+            switch MixedKeyAction.resolve(event: event, context: context) {
+            case .passThrough:
+                return false
+            case .acceptEnglish(let index):
+                context.currentIndex = index
+                commitCandidate(client: sender)
+                return true
+            case .insertEnglishSpace:
+                if context.composeString.count < 120 {
+                    context.composeString.append(" ")
+                    updateCandidatesWindow()
+                } else {
+                    commitComposedString(client: sender)
+                    client().insertText(" ", replacementRange: NSRange(location: NSNotFound, length: 0))
+                }
+                return true
+            case .finishLiteral(let consumeKey):
+                commitComposedString(client: sender)
+                return consumeKey
+            case .none:
+                break
+            }
+
             NSLog("key=\(Utilities.TranslateKey(event)), keyCode=\(event.keyCode)")
 
-            if key.isLetter {
+            if inputString.unicodeScalars.allSatisfy({ (65...90).contains($0.value) || (97...122).contains($0.value) }) {
                 InputContext.shared.composeString.append(inputString)
                 updateCandidatesWindow()
                 return true
@@ -309,8 +381,7 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            else if key.isNumber {
-                let keyValue = Int(key.hexDigitValue!)
+            else if let keyValue = Int(inputString), (0...9).contains(keyValue) {
                 if uiManager.selectByNumber(keyValue: keyValue) {
                     commitCandidate(client: sender)
                     return true
@@ -352,15 +423,19 @@ class GoogleInputToolsController: IMKInputController {
                 return true
             }
 
-            else if event.keyCode == kVK_Space && InputContext.shared.candidates.count > 0 {
-                commitCandidate(client: sender)
+            else if event.keyCode == kVK_Space && !InputContext.shared.composeString.isEmpty {
+                if InputContext.shared.candidates.isEmpty {
+                    // Confirm this revision only, once its candidates arrive.
+                    InputContext.shared.pendingSpace = true
+                } else {
+                    commitCandidate(client: sender)
+                }
                 return true
             }
 
-            else if event.keyCode == kVK_Escape {
+            else if event.keyCode == kVK_Escape && !InputContext.shared.composeString.isEmpty {
                 InputContext.shared.clean()
-                let range = NSMakeRange(NSNotFound, NSNotFound)
-                client().setMarkedText("", selectionRange: range, replacementRange: range)
+                CompositionText(string: "").apply(to: client())
                 uiManager.reset()
                 return true
             }
@@ -374,7 +449,7 @@ class GoogleInputToolsController: IMKInputController {
                     } else if InputContext.shared.composeString.count > 0 {
                         commitComposedString(client: sender)
                     }
-                    let range = NSMakeRange(NSNotFound, NSNotFound)
+                    let range = NSMakeRange(NSNotFound, 0)
                     client().insertText(fullWidth, replacementRange: range)
                     return true
                 }

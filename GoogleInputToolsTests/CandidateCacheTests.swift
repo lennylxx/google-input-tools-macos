@@ -130,55 +130,81 @@ class CandidateCacheTests: XCTestCase {
         XCTAssertEqual(result?.annotation, ["shi jie", "shi jie"])
     }
 
-    // MARK: - Frequency re-ranking tests
-
-    func testRerankWithNoFrequencyDataPreservesOrder() {
-        let candidates = ["你好", "你号", "尼好"]
-        let ml = [5, 5, 5]
-        let (reranked, rerankedML) = cache.rerank(
-            pinyin: "nihao", candidates: candidates, matchedLength: ml)
-        XCTAssertEqual(reranked, ["你好", "你号", "尼好"])
-        XCTAssertEqual(rerankedML, [5, 5, 5])
+    func testFiveExplicitSelectionsAreRequired() {
+        let words = ["世界", "视界", "师姐"]
+        for _ in 0..<4 { cache.recordSelection(pinyin: "shijie", candidate: "视界") }
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: words, matchedLength: [6, 6, 6]).0, words)
+        cache.recordSelection(pinyin: "shijie", candidate: "视界")
+        let result = cache.rerank(pinyin: "shijie", candidates: words, matchedLength: [6, 6, 6])
+        XCTAssertEqual(result.0, ["视界", "世界", "师姐"])
+        XCTAssertEqual(result.1, [6, 6, 6])
     }
 
-    func testRerankBoostsFrequentCandidate() {
-        cache.recordSelection(pinyin: "nihao", candidate: "尼好")
-
-        let expectation = self.expectation(description: "Frequency write")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            expectation.fulfill()
-        }
-        waitForExpectations(timeout: 2)
-
-        let candidates = ["你好", "你号", "尼好"]
-        let ml = [5, 2, 5]
-        let (reranked, rerankedML) = cache.rerank(
-            pinyin: "nihao", candidates: candidates, matchedLength: ml)
-        XCTAssertEqual(reranked.first, "尼好")
-        XCTAssertEqual(rerankedML?.first, 5)
+    func testDefaultConfirmationDoesNotTeachExplicitOnlyProfile() {
+        for _ in 0..<20 { cache.recordSelection(pinyin: "shijie", candidate: "视界", explicit: false) }
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: ["世界", "视界"], matchedLength: nil).0.first, "世界")
+        var allSelections = AccuracyOptions()
+        allSelections.explicitOnly = false
+        for _ in 0..<5 { cache.recordSelection(pinyin: "shijie", candidate: "视界", explicit: false, options: allSelections) }
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: ["世界", "视界"], matchedLength: nil).0.first, "世界")
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: ["世界", "视界"], matchedLength: nil, options: allSelections).0.first, "视界")
     }
 
-    func testRerankBySelectionCount() {
-        for _ in 0..<3 {
-            cache.recordSelection(pinyin: "nihao", candidate: "你号")
-        }
-        cache.recordSelection(pinyin: "nihao", candidate: "尼好")
+    func testNinetyDayDecayRestoresCloudFirstChoice() {
+        var time = Date(timeIntervalSince1970: 1_700_000_000)
+        let timed = CandidateCache(databasePath: ":memory:", now: { time })
+        for _ in 0..<5 { timed.recordSelection(pinyin: "shijie", candidate: "视界") }
+        let words = ["世界", "视界"]
+        XCTAssertEqual(timed.rerank(pinyin: "shijie", candidates: words, matchedLength: nil).0.first, "视界")
+        time.addTimeInterval(90 * 86400)
+        XCTAssertEqual(timed.rerank(pinyin: "shijie", candidates: words, matchedLength: nil).0.first, "世界")
+        timed.close()
+    }
 
-        let expectation = self.expectation(description: "Frequency write")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            expectation.fulfill()
-        }
-        waitForExpectations(timeout: 2)
+    func testBalancedBoostCannotMoveTailCandidateToFirst() {
+        let words = ["一", "二", "三", "四", "五", "六", "七"]
+        for _ in 0..<100 { cache.recordSelection(pinyin: "yi", candidate: "七") }
+        let result = cache.rerank(pinyin: "yi", candidates: words, matchedLength: nil)
+        XCTAssertEqual(result.0.first, "一")
+        XCTAssertEqual(result.0.firstIndex(of: "七"), 4)
+    }
 
-        let candidates = ["你好", "你号", "尼好"]
-        let ml = [5, 2, 5]
-        let (reranked, rerankedML) = cache.rerank(
-            pinyin: "nihao", candidates: candidates, matchedLength: ml)
-        XCTAssertEqual(reranked[0], "你号")
-        XCTAssertEqual(rerankedML?[0], 2)
-        XCTAssertEqual(reranked[1], "尼好")
-        XCTAssertEqual(rerankedML?[1], 5)
-        XCTAssertEqual(reranked[2], "你好")
-        XCTAssertEqual(rerankedML?[2], 5)
+    func testPartialCandidateCannotOutrankFullPhraseThroughLearning() {
+        for _ in 0..<20 { cache.recordSelection(pinyin: "nihao", candidate: "你") }
+        let result = cache.rerank(pinyin: "nihao", candidates: ["你好", "你"], matchedLength: [5, 2])
+        XCTAssertEqual(result.0, ["你好", "你"])
+        XCTAssertEqual(result.1, [5, 2])
+    }
+
+    func testCacheAndLearningAreIsolatedBySchemeAndCandidateCount() {
+        cache.store("nihao", candidates: ["你好"], metadata: nil, scheme: .Pinyin, candidateCount: 20)
+        XCTAssertNil(cache.lookup("nihao", scheme: .Shuangpin_Xiaohe))
+        XCTAssertNil(cache.lookup("nihao", candidateCount: 11))
+        for _ in 0..<10 { cache.recordSelection(pinyin: "nihao", candidate: "拟好", scheme: .Pinyin) }
+        XCTAssertEqual(cache.rerank(pinyin: "nihao", candidates: ["你好", "拟好"], matchedLength: nil,
+            scheme: .Shuangpin_Xiaohe).0.first, "你好")
+    }
+
+    func testCacheReadsDoNotExtendFreshnessAndOfflineCanUseExpiredData() {
+        var time = Date(timeIntervalSince1970: 1_700_000_000)
+        let timed = CandidateCache(databasePath: ":memory:", now: { time })
+        timed.store("shi", candidates: ["是"], metadata: nil)
+        time.addTimeInterval(23 * 3600)
+        XCTAssertNotNil(timed.lookup("shi"))
+        time.addTimeInterval(2 * 3600)
+        XCTAssertNil(timed.lookup("shi"))
+        XCTAssertNotNil(timed.lookup("shi", allowExpired: true))
+        // Missing cloud metadata must consume only the cached prefix, not all of shijie.
+        XCTAssertEqual(timed.lookupLongestPrefix("shijie")?.matchedLength, [3])
+        timed.close()
+    }
+
+    func testLearningPersistsAndCanBeCleared() {
+        for _ in 0..<5 { cache.recordSelection(pinyin: "shijie", candidate: "视界") }
+        cache.close()
+        cache = CandidateCache(databasePath: tempDBPath)
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: ["世界", "视界"], matchedLength: nil).0.first, "视界")
+        cache.clearFrequencies()
+        XCTAssertEqual(cache.rerank(pinyin: "shijie", candidates: ["世界", "视界"], matchedLength: nil).0.first, "世界")
     }
 }

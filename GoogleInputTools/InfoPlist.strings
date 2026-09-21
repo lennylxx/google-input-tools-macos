@@ -6,4 +6,5 @@
   
 */
 
-CFBundleName = "Google Input Tools";
+CFBundleName = "谷歌拼音";
+CFBundleDisplayName = "谷歌拼音";

@@ -32,6 +32,13 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 		D1E2F3A4B5C60718293041C1 /* CandidateCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E2F3A4B5C60718293041C0 /* CandidateCacheTests.swift */; };
 		C1D2E3F4A5B6071829304170 /* ShiftToggleTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */; };
 		E1F2A3B4C5D60718293041E3 /* PunctuationMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D60718293041E2 /* PunctuationMapTests.swift */; };
+		F0AABBCCDDEEFF0011223301 /* AccuracySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF0011223300 /* AccuracySettings.swift */; };
+		F0AABBCCDDEEFF0011223303 /* PersonalDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF0011223302 /* PersonalDictionary.swift */; };
+		F0AABBCCDDEEFF0011223305 /* CandidatePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF0011223304 /* CandidatePresentationTests.swift */; };
+		F0AABBCCDDEEFF0011223307 /* PinyinSpelling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF0011223306 /* PinyinSpelling.swift */; };
+		F0AABBCCDDEEFF0011223309 /* EnglishCompletionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF0011223308 /* EnglishCompletionEngine.swift */; };
+		F0AABBCCDDEEFF001122330B /* MixedInputEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF001122330A /* MixedInputEngine.swift */; };
+		F0AABBCCDDEEFF001122330D /* MixedInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AABBCCDDEEFF001122330C /* MixedInputTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +71,13 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 		C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftToggleTrackerTests.swift; sourceTree = "<group>"; };
 		E1F2A3B4C5D60718293041E2 /* PunctuationMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PunctuationMapTests.swift; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293041A1 /* GoogleInputToolsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GoogleInputToolsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F0AABBCCDDEEFF0011223300 /* AccuracySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccuracySettings.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF0011223302 /* PersonalDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalDictionary.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF0011223304 /* CandidatePresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidatePresentationTests.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF0011223306 /* PinyinSpelling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinyinSpelling.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF0011223308 /* EnglishCompletionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnglishCompletionEngine.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF001122330A /* MixedInputEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedInputEngine.swift; sourceTree = "<group>"; };
+		F0AABBCCDDEEFF001122330C /* MixedInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedInputTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 
@@ -130,6 +144,11 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				BC5FBFDEBAE48F5E02DAE35A /* CandidateCache.swift */,
 				4DA371B32CF80E6F0055F12E /* Utilities.swift */,
 				4D3B7ACC26D3F30C008C1A4B /* UISettings.swift */,
+				F0AABBCCDDEEFF0011223302 /* PersonalDictionary.swift */,
+				F0AABBCCDDEEFF0011223300 /* AccuracySettings.swift */,
+				F0AABBCCDDEEFF001122330A /* MixedInputEngine.swift */,
+				F0AABBCCDDEEFF0011223308 /* EnglishCompletionEngine.swift */,
+				F0AABBCCDDEEFF0011223306 /* PinyinSpelling.swift */,
 				4D3B7ACE26D3F30C008C1A4B /* ProxySettings.swift */,
 				02DB9849E580370B9789D2F0 /* CandidateUIManager.swift */,
 				602F47FB93FF5FA30D594310 /* SystemUICandidateManager.swift */,
@@ -154,6 +173,8 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			isa = PBXGroup;
 			children = (
 				B1A2C3D4E5F60718293041B0 /* InputContextTests.swift */,
+				F0AABBCCDDEEFF0011223304 /* CandidatePresentationTests.swift */,
+				F0AABBCCDDEEFF001122330C /* MixedInputTests.swift */,
 				B1A2C3D4E5F60718293041B2 /* CloudInputEngineTests.swift */,
 				D1E2F3A4B5C60718293041C0 /* CandidateCacheTests.swift */,
 				C1D2E3F4A5B6071829304165 /* ShiftToggleTrackerTests.swift */,
@@ -253,6 +274,11 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			buildActionMask = 2147483647;
 			files = (
 				4D3B7ACD26D3F30C008C1A4B /* UISettings.swift in Sources */,
+				F0AABBCCDDEEFF0011223303 /* PersonalDictionary.swift in Sources */,
+				F0AABBCCDDEEFF0011223301 /* AccuracySettings.swift in Sources */,
+				F0AABBCCDDEEFF001122330B /* MixedInputEngine.swift in Sources */,
+				F0AABBCCDDEEFF0011223309 /* EnglishCompletionEngine.swift in Sources */,
+				F0AABBCCDDEEFF0011223307 /* PinyinSpelling.swift in Sources */,
 				4D3B7ACF26D3F30C008C1A4B /* ProxySettings.swift in Sources */,
 				4DCA725F26D2368B00E53537 /* GoogleInputToolsController.swift in Sources */,
 				4DCA726326D249F600E53537 /* CandidatesWindow.swift in Sources */,
@@ -278,6 +304,8 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 			buildActionMask = 2147483647;
 			files = (
 				B1A2C3D4E5F60718293041B1 /* InputContextTests.swift in Sources */,
+				F0AABBCCDDEEFF0011223305 /* CandidatePresentationTests.swift in Sources */,
+				F0AABBCCDDEEFF001122330D /* MixedInputTests.swift in Sources */,
 				B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */,
 				D1E2F3A4B5C60718293041C1 /* CandidateCacheTests.swift in Sources */,
 				C1D2E3F4A5B6071829304170 /* ShiftToggleTrackerTests.swift in Sources */,
@@ -360,7 +388,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -417,7 +445,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -443,7 +471,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputTools;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				OTHER_LDFLAGS = "-lsqlite3";
@@ -468,7 +496,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputTools;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				OTHER_LDFLAGS = "-lsqlite3";
@@ -488,7 +516,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputToolsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -508,7 +536,7 @@ B1A2C3D4E5F60718293041B3 /* CloudInputEngineTests.swift in Sources */ = {isa = P
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lennylxx.inputmethod.GoogleInputToolsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

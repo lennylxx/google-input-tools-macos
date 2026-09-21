@@ -2,117 +2,146 @@
 //  CandidatesWindow.swift
 //  GoogleInputTools
 //
-//  Created by lennylxx on 8/22/21.
-//
 
-import Foundation
+import Cocoa
 import InputMethodKit
-import SwiftUI
+
+// All coordinates are AppKit global screen coordinates, including negative
+// origins on secondary displays. Keep a small gap from the active text line.
+enum CandidateWindowPlacement {
+    static let margin: CGFloat = 4
+
+    static func screenIndex(for caret: NSRect, frames: [NSRect]) -> Int? {
+        let point = NSPoint(x: caret.midX, y: caret.midY)
+        return frames.firstIndex(where: { $0.contains(point) })
+    }
+
+    static func frame(size: NSSize, caret: NSRect, visibleFrame: NSRect,
+                      offset: NSPoint = .zero) -> NSRect {
+        let available = visibleFrame.insetBy(dx: margin, dy: margin)
+        let width = min(size.width, available.width)
+        let height = min(size.height, available.height)
+        let x = min(max(caret.minX + offset.x, available.minX), available.maxX - width)
+        let below = caret.minY - margin - height + offset.y
+        let above = caret.maxY + margin + offset.y
+        let y = below >= available.minY ? below : above
+        return NSRect(x: x, y: min(max(y, available.minY), available.maxY - height),
+                      width: width, height: height)
+    }
+
+    static func isValidCaret(_ rect: NSRect) -> Bool {
+        [rect.origin.x, rect.origin.y, rect.width, rect.height].allSatisfy { $0.isFinite }
+            && rect.height > 0
+    }
+
+    static func caretRect(visibleFrames: [NSRect], inlineRect: (Int) -> NSRect) -> NSRect? {
+        // This is IMK's candidate-positioning API. Index zero anchors the active
+        // marked session and is supported by clients that cannot map document
+        // offsets through firstRectForCharacterRange. Do not query one past the
+        // last character or substitute the document API's placeholder rectangle.
+        let rect = inlineRect(0)
+        guard isValidCaret(rect),
+              screenIndex(for: rect.standardized, frames: visibleFrames) != nil else { return nil }
+        return rect.standardized
+    }
+}
 
 class CandidatesWindow: NSWindow {
-
     static let shared = CandidatesWindow()
+    let _view = CandidatesView()
 
-    var _view: CandidatesView
-
-    // Drag offset relative to caret position, persists across updates
     private var dragOffset: NSPoint = .zero
     private var isDragging = false
     private var dragStartMouse: NSPoint = .zero
     private var dragStartOrigin: NSPoint = .zero
+    private var lastCaret: NSRect?
+    private var compositionSize: NSSize = .zero
 
-    override init(
-        contentRect: NSRect, styleMask style: NSWindow.StyleMask,
-        backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool
-    ) {
-        self._view = CandidatesView()
-
-        super.init(
-            contentRect: contentRect, styleMask: NSWindow.StyleMask.borderless,
-            backing: backingStoreType, defer: flag)
-
-        self.isOpaque = false
-        self.level = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
-        self.backgroundColor = NSColor.clear
-        self.isMovableByWindowBackground = true
-        self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-
-        self._view = CandidatesView.init(frame: self.frame)
-        self.contentView = _view
-        self.orderFront(nil)
+    override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask,
+                  backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
+        super.init(contentRect: contentRect, styleMask: .borderless, backing: backingStoreType, defer: flag)
+        isOpaque = true
+        level = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
+        backgroundColor = UISettings.TextBackground
+        animationBehavior = .none
+        isMovableByWindowBackground = true
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        contentView = _view
+        // Stay hidden until the first nonempty presentation is ready.
     }
 
-    override var canBecomeKey: Bool { return true }
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
 
     override func mouseDown(with event: NSEvent) {
         isDragging = true
         dragStartMouse = NSEvent.mouseLocation
-        dragStartOrigin = self.frame.origin
+        dragStartOrigin = frame.origin
     }
 
     override func mouseDragged(with event: NSEvent) {
         guard isDragging else { return }
         let current = NSEvent.mouseLocation
-        let newOrigin = NSMakePoint(
-            dragStartOrigin.x + (current.x - dragStartMouse.x),
-            dragStartOrigin.y + (current.y - dragStartMouse.y))
-        self.setFrameOrigin(newOrigin)
+        var origin = NSPoint(x: dragStartOrigin.x + current.x - dragStartMouse.x,
+                             y: dragStartOrigin.y + current.y - dragStartMouse.y)
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(current) }) {
+            let bounds = screen.visibleFrame.insetBy(dx: 4, dy: 4)
+            origin.x = min(max(origin.x, bounds.minX), max(bounds.minX, bounds.maxX - frame.width))
+            origin.y = min(max(origin.y, bounds.minY), max(bounds.minY, bounds.maxY - frame.height))
+        }
+        setFrameOrigin(origin)
     }
 
     override func mouseUp(with event: NSEvent) {
-        if isDragging {
-            let current = NSEvent.mouseLocation
-            dragOffset.x += current.x - dragStartMouse.x
-            dragOffset.y += current.y - dragStartMouse.y
-            isDragging = false
-        }
+        guard isDragging else { return }
+        dragOffset.x += frame.minX - dragStartOrigin.x
+        dragOffset.y += frame.minY - dragStartOrigin.y
+        isDragging = false
     }
 
     func update(sender: IMKTextInput) {
-        let caretPosition = self.getCaretPosition(sender: sender)
-        let size = self._view.preferredSize
-
-        var rect: NSRect = NSZeroRect
-
-        if size.width > 0 {
-            rect = NSMakeRect(
-                caretPosition.x + dragOffset.x,
-                caretPosition.y - size.height + dragOffset.y,
-                size.width,
-                size.height)
+        let context = InputContext.shared
+        _view.refresh(context: context)
+        guard !context.composeString.isEmpty else { hide(); return }
+        guard let caret = getCaretRect(sender: sender) ?? lastCaret else { return }
+        let screens = NSScreen.screens
+        guard let index = CandidateWindowPlacement.screenIndex(for: caret, frames: screens.map(\.visibleFrame)) else { return }
+        let visibleFrame = screens[index].visibleFrame
+        _view.maximumWidth = visibleFrame.width - CandidateWindowPlacement.margin * 2
+        let preferred = _view.preferredSize
+        guard preferred.width > 0 else { return }
+        lastCaret = caret
+        // Do not shrink on every keystroke or response. Reset size after commit.
+        compositionSize = NSSize(width: max(compositionSize.width, preferred.width),
+                                 height: max(compositionSize.height, preferred.height))
+        let rect = CandidateWindowPlacement.frame(size: compositionSize, caret: caret,
+                                                  visibleFrame: visibleFrame, offset: dragOffset)
+        if !isDragging && frame != rect {
+            setFrame(rect, display: false, animate: false)
         }
-
-        NSLog(
-            "CandidatesWindow::update rect: (%.0f, %.0f, %.0f, %.0f)",
-            rect.origin.x, rect.origin.y, rect.width, rect.height)
-
-        // Don't reposition while user is dragging
-        if !isDragging {
-            self.setFrame(rect, display: true)
-        }
-
-        // force candidate view to redraw
-        self._view.needsDisplay = true
+        _view.displayIfNeeded()
     }
 
-    func getCaretPosition(sender: IMKTextInput) -> NSPoint {
-        var pos: NSPoint
-        var lineHeightRect = NSRect.zero
-
-        withUnsafeMutablePointer(to: &lineHeightRect) { ptr in
-            _ = sender.attributes(forCharacterIndex: 0, lineHeightRectangle: ptr)
-        }
-
-        pos = NSMakePoint(lineHeightRect.origin.x, lineHeightRect.origin.y)
-
-        return pos
+    func getCaretRect(sender: IMKTextInput) -> NSRect? {
+        return CandidateWindowPlacement.caretRect(visibleFrames: NSScreen.screens.map(\.visibleFrame),
+            inlineRect: { index in
+                var rect = NSRect.zero
+                _ = sender.attributes(forCharacterIndex: index, lineHeightRectangle: &rect)
+                return rect
+            })
     }
 
     func show() {
-        self.setIsVisible(true)
+        guard _view.candidateText.length > 0, lastCaret != nil, !isVisible else { return }
+        orderFrontRegardless()
     }
 
     func hide() {
-        self.setIsVisible(false)
+        if isVisible { orderOut(nil) }
+        _view.reset()
+        lastCaret = nil
+        compositionSize = .zero
+        dragOffset = .zero
+        isDragging = false
     }
 }
